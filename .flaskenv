@@ -1,0 +1,2 @@
+FLASK_APP=monshin
+FLASK_RUN_PORT=8001
