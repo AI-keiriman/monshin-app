@@ -35,10 +35,28 @@ class ConsultationStatus(StrEnum):
     DONE = "done"  # 結果あり
 
 
+STATUS_LABELS = {
+    ConsultationStatus.ASKING: "質問に答える前",
+    ConsultationStatus.DONE: "結果あり",
+}
+
+
 class Choice(StrEnum):
     REPAIR = "repair"  # 直す
     SELL = "sell"  # 手放す
     KEEP = "keep"  # そのまま使う
+
+
+CHOICE_LABELS = {
+    Choice.REPAIR: "直す",
+    Choice.SELL: "手放す",
+    Choice.KEEP: "そのまま使う",
+}
+
+
+def yen(value: int) -> str:
+    """金額を「1,200円」の形にする"""
+    return f"{value:,}円"
 
 
 class User(UserMixin, db.Model):
@@ -72,6 +90,15 @@ class PriceRule(db.Model):
     # 円の整数。無いときは NULL
     min_price: Mapped[int | None]
     max_price: Mapped[int | None]
+
+    @property
+    def price_text(self) -> str:
+        """料金の目安の表示。下限と上限、下限だけ、どちらも無い、の3通り"""
+        if self.min_price is None:
+            return "要見積もり"
+        if self.max_price is None:
+            return f"{yen(self.min_price)}〜"
+        return f"{yen(self.min_price)}〜{yen(self.max_price)}"
 
 
 class Consultation(db.Model):
@@ -110,6 +137,17 @@ class Consultation(db.Model):
     @property
     def instrument_label(self) -> str:
         return INSTRUMENT_LABELS[Instrument(self.instrument)]
+
+    @property
+    def status_label(self) -> str:
+        return STATUS_LABELS[ConsultationStatus(self.status)]
+
+    @property
+    def choice_label(self) -> str | None:
+        """選んだ出口の名前。まだ選んでいなければ None"""
+        if self.choice is None:
+            return None
+        return CHOICE_LABELS[Choice(self.choice)]
 
 
 class ConsultationQuestion(db.Model):

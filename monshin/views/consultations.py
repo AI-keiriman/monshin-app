@@ -1,3 +1,5 @@
+import logging
+
 from flask import (
     Blueprint,
     abort,
@@ -5,6 +7,7 @@ from flask import (
     flash,
     redirect,
     render_template,
+    request,
     send_from_directory,
     url_for,
 )
@@ -13,16 +16,22 @@ from flask_login import current_user, login_required
 from monshin.extensions import db
 from monshin.forms import AnswersForm, ConsultationForm
 from monshin.models import (
+    CHOICE_LABELS,
     INSTRUMENT_LABELS,
+    Choice,
     Consultation,
+    ConsultationCause,
     ConsultationQuestion,
+    ConsultationStatus,
     Instrument,
+    PriceRule,
     now_jst,
 )
 from monshin.services.ai import AIError
 from monshin.uploads import detect_media_type, save_image, upload_folder
 
 bp = Blueprint("consultations", __name__, url_prefix="/consultations")
+logger = logging.getLogger(__name__)
 
 AI_UNAVAILABLE = "今は AI を使えません。時間をおいて、もう一度お試しください。"
 
@@ -68,6 +77,20 @@ def read_image(form: ConsultationForm) -> tuple[bytes, str] | None:
     return data, media_type
 
 
+def load_image(consultation: Consultation) -> tuple[bytes, str] | None:
+    """保存してある写真を読み、(バイト列, 種類) を返す。写真が無ければ None"""
+    if not consultation.image_filename:
+        return None
+    path = upload_folder() / consultation.image_filename
+    if not path.is_file():
+        return None
+    data = path.read_bytes()
+    media_type = detect_media_type(data)
+    if media_type is None:
+        return None
+    return data, media_type
+
+
 def render_new(form: ConsultationForm, status: int = 200):
     return (
         render_template(
@@ -78,6 +101,27 @@ def render_new(form: ConsultationForm, status: int = 200):
         ),
         status,
     )
+
+
+def render_questions(consultation: Consultation, form: AnswersForm, status: int = 200):
+    return (
+        render_template(
+            "consultations/questions.html", consultation=consultation, form=form
+        ),
+        status,
+    )
+
+
+@bp.route("/")
+@login_required
+def index():
+    """自分の問診の一覧。新しい順"""
+    consultations = db.session.scalars(
+        db.select(Consultation)
+        .filter_by(user_id=current_user.id)
+        .order_by(Consultation.created_at.desc(), Consultation.id.desc())
+    ).all()
+    return render_template("consultations/index.html", consultations=consultations)
 
 
 @bp.route("/new")
@@ -135,33 +179,104 @@ def create():
 @login_required
 def questions(consultation_id: int):
     consultation = get_own_consultation_or_403(consultation_id)
+    # 結果がある問診は、結果の画面へ移す
+    if consultation.status == ConsultationStatus.DONE:
+        return redirect(url_for("consultations.show", consultation_id=consultation.id))
     form = AnswersForm()
     # 保存済みの答えがあれば、欄に入れておく
     for field, question in zip(form.answer_fields, consultation.questions):
         field.data = question.answer
-    return render_template(
-        "consultations/questions.html", consultation=consultation, form=form
-    )
+    return render_questions(consultation, form)
 
 
 @bp.route("/<int:consultation_id>/answers", methods=["POST"])
 @login_required
 def answers(consultation_id: int):
     consultation = get_own_consultation_or_403(consultation_id)
+    # 結果がある問診は、診断をやり直さない（AI を二重に呼ばない）
+    if consultation.status == ConsultationStatus.DONE:
+        return redirect(url_for("consultations.show", consultation_id=consultation.id))
+
+    # 1. 3つの答えを確かめて、保存する
     form = AnswersForm()
     if not form.validate_on_submit():
-        return (
-            render_template(
-                "consultations/questions.html", consultation=consultation, form=form
-            ),
-            422,
-        )
+        return render_questions(consultation, form, 422)
     for field, question in zip(form.answer_fields, consultation.questions):
         question.answer = field.data
     db.session.commit()
-    # 診断の結果（AI の2回目の呼び出し）は、次の機能で作る
-    flash("答えを保存しました。診断の結果の画面は、これから作ります。")
-    return redirect(url_for("consultations.questions", consultation_id=consultation.id))
+
+    # 2. AI を呼ぶ。料金表の分類の一覧も渡す
+    rules = db.session.scalars(db.select(PriceRule).order_by(PriceRule.id)).all()
+    if not rules:
+        logger.error("料金表が空である。uv run flask seed を実行する")
+        flash("料金表が入っていないため、結果を出せません。")
+        return render_questions(consultation, form, 503)
+    ai = current_app.extensions["ai"]
+    try:
+        # 3. AI は、原因の候補（最大3つ）と、料金表の分類を1つ返す
+        diagnosis = ai.diagnose(
+            consultation.instrument_label,
+            consultation.symptom,
+            [(q.question, q.answer) for q in consultation.questions],
+            [(r.code, r.label, r.symptom_example) for r in rules],
+            load_image(consultation),
+        )
+    except AIError:
+        # 6. 失敗しても、答えは保存したまま。もう一度送ると、やり直せる
+        flash(AI_UNAVAILABLE + "答えは保存しました。")
+        return render_questions(consultation, form, 503)
+
+    # 4. AI が返した分類が料金表に無いときは、「その他」にする
+    rules_by_code = {r.code: r for r in rules}
+    rule = rules_by_code.get(diagnosis.category_code) or rules_by_code.get("other")
+
+    # 5. 原因の候補と分類を保存し、状態を「結果あり」にする
+    for position, cause in enumerate(diagnosis.causes, start=1):
+        consultation.causes.append(
+            ConsultationCause(
+                position=position, name=cause.name, description=cause.description
+            )
+        )
+    consultation.price_rule = rule
+    consultation.status = ConsultationStatus.DONE
+    consultation.completed_at = now_jst()
+    db.session.commit()
+    return redirect(url_for("consultations.show", consultation_id=consultation.id))
+
+
+@bp.route("/<int:consultation_id>")
+@login_required
+def show(consultation_id: int):
+    """診断の結果"""
+    consultation = get_own_consultation_or_403(consultation_id)
+    # 質問に答える前の問診は、質問の画面へ移す
+    if consultation.status != ConsultationStatus.DONE:
+        return redirect(
+            url_for("consultations.questions", consultation_id=consultation.id)
+        )
+    return render_template(
+        "consultations/show.html",
+        consultation=consultation,
+        choices=[(c.value, CHOICE_LABELS[c]) for c in Choice],
+    )
+
+
+@bp.route("/<int:consultation_id>/choice", methods=["POST"])
+@login_required
+def choose(consultation_id: int):
+    """出口（直す／手放す／そのまま使う）を保存する。選び直せる"""
+    consultation = get_own_consultation_or_403(consultation_id)
+    if consultation.status != ConsultationStatus.DONE:
+        return redirect(
+            url_for("consultations.questions", consultation_id=consultation.id)
+        )
+    try:
+        choice = Choice(request.form.get("choice", ""))
+    except ValueError:
+        abort(422)
+    consultation.choice = choice
+    db.session.commit()
+    return redirect(url_for("consultations.show", consultation_id=consultation.id))
 
 
 @bp.route("/<int:consultation_id>/photo")

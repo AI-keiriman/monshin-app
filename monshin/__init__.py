@@ -24,6 +24,7 @@ def create_app(config=None):
         AI_SERVICE=None,
         # 返事の長さの上限。考える分（thinking）もここに数えられるので、余裕を持たせる
         AI_MAX_TOKENS_QUESTIONS=1024,
+        AI_MAX_TOKENS_DIAGNOSIS=2048,
         # 1回の呼び出しで待つ秒数と、やり直しの回数。合計で gunicorn の時間切れ（30秒）より短くする
         AI_TIMEOUT_SECONDS=12.0,
         AI_MAX_RETRIES=1,
@@ -62,6 +63,12 @@ def create_app(config=None):
     from monshin import commands
 
     commands.init_app(app)
+
+    @app.template_filter("jp_datetime")
+    def jp_datetime(value) -> str:
+        """「11月14日(土) 10:00」の形にする"""
+        weekday = "月火水木金土日"[value.weekday()]
+        return f"{value.month}月{value.day}日({weekday}) {value:%H:%M}"
 
     @app.errorhandler(403)
     def forbidden(error):

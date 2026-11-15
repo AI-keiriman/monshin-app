@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>診断の結果</h1>
+
+<article>
+  <header><strong>{{ consultation.instrument_label }}</strong>　{{ consultation.created_at|jp_datetime }}</header>
+  <p style="white-space: pre-wrap">{{ consultation.symptom }}</p>
+  {% if consultation.image_filename %}
+    <img src="{{ url_for('consultations.photo', consultation_id=consultation.id) }}" alt="問診に付けた写真" style="max-width: 20rem">
+  {% endif %}
+  <details>
+    <summary>質問と答え</summary>
+    {% for question in consultation.questions %}
+      <p><strong>質問{{ question.position }}：{{ question.question }}</strong><br><span style="white-space: pre-wrap">{{ question.answer }}</span></p>
+    {% endfor %}
+  </details>
+</article>
+
+<h2>考えられる原因</h2>
+<ol>
+  {% for cause in consultation.causes %}
+    <li><strong>{{ cause.name }}</strong><br>{{ cause.description }}</li>
+  {% endfor %}
+</ol>
+
+<h2>料金の目安</h2>
+<article>
+  <p style="font-size: 2rem; margin-bottom: 0"><strong>{{ consultation.price_rule.price_text }}</strong></p>
+  <small>分類：{{ consultation.price_rule.label }}</small>
+</article>
+
+<h2>この楽器を、どうしますか</h2>
+{% if consultation.choice %}
+  <p>今の選択：<strong>{{ consultation.choice_label }}</strong></p>
+{% endif %}
+<form method="post" action="{{ url_for('consultations.choose', consultation_id=consultation.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="grid">
+    {% for value, label in choices %}
+      <button type="submit" name="choice" value="{{ value }}" {% if consultation.choice != value %}class="outline"{% endif %}>{{ label }}</button>
+    {% endfor %}
+  </div>
+</form>
+
+{% if consultation.choice == "sell" %}
+  <article>
+    <header><strong>買い取りの目安（準備中）</strong></header>
+    <p>買い取りの目安を出す機能は、準備中です。</p>
+  </article>
+{% endif %}
+
+<p><a href="{{ url_for('consultations.index') }}">問診の一覧へ</a></p>
+{% endblock %}
