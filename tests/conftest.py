@@ -1,9 +1,11 @@
 import pytest
 
 from monshin import create_app
+from monshin.commands import seed_price_rules
 from monshin.extensions import db
 from monshin.models import Consultation, ConsultationQuestion, User
 from monshin.services import ai
+from monshin.services.ai import Cause, Diagnosis
 
 # 本物の外部サービス（Claude API）は、テストでは呼ばない。
 # フェイク（偽物）のクラスを create_app() の設定で差し替える。
@@ -21,6 +23,16 @@ class FakeAI:
     def __init__(self):
         self.question_calls = []  # generate_questions が呼ばれたときの引数
         self.questions = list(FAKE_QUESTIONS)
+        self.diagnose_calls = []  # diagnose が呼ばれたときの引数
+        self.diagnosis = Diagnosis(
+            causes=[
+                Cause(
+                    "ポットの故障", "ノブの中の部品が、すり減っている可能性があります。"
+                ),
+                Cause("配線の接触不良", "はんだが外れかけている可能性があります。"),
+            ],
+            category_code="pot",
+        )
         self.error = None  # 例外を入れておくと、それを投げる
 
     def generate_questions(self, instrument_label, symptom, image=None):
@@ -30,6 +42,20 @@ class FakeAI:
         if self.error:
             raise self.error
         return list(self.questions)
+
+    def diagnose(self, instrument_label, symptom, answers, categories, image=None):
+        self.diagnose_calls.append(
+            {
+                "instrument_label": instrument_label,
+                "symptom": symptom,
+                "answers": answers,
+                "categories": categories,
+                "image": image,
+            }
+        )
+        if self.error:
+            raise self.error
+        return self.diagnosis
 
 
 @pytest.fixture
@@ -61,6 +87,8 @@ def app(fake_ai, tmp_path):
     )
     with app.app_context():
         db.create_all()
+        # 料金表は、本番でも最初に入れておくデータなので、テストでも入れておく
+        seed_price_rules()
         yield app
         db.session.remove()
 
@@ -109,6 +137,25 @@ def make_consultation(app):
             )
         db.session.add(consultation)
         db.session.commit()
+        return consultation
+
+    return _make
+
+
+ANSWERS = {"answer_1": "変わりません", "answer_2": "出ます", "answer_3": "動きます"}
+
+
+@pytest.fixture
+def make_done_consultation(client, make_consultation, login):
+    """結果ありの問診を1つ作る。本人としてログインし、答えを送って診断まで進める"""
+
+    def _make(user, **values):
+        consultation = make_consultation(user, **values)
+        login(user)
+        response = client.post(
+            f"/consultations/{consultation.id}/answers", data=ANSWERS
+        )
+        assert response.status_code == 302
         return consultation
 
     return _make

@@ -41,7 +41,7 @@
 - Claude API は `monshin/services/ai.py` の関数からだけ呼ぶ
 - モデルは環境変数 `ANTHROPIC_MODEL`（既定 `claude-haiku-5-5`）。API キーは環境変数 `ANTHROPIC_API_KEY`
 - AI を呼ぶのは、1回の問診につき2回だけ（質問を作る、結果を作る）。会話を何往復もさせない
-- `max_tokens` は小さめにする（質問は 1024。設定 `AI_MAX_TOKENS_QUESTIONS`）。Claude Haiku 5.5 は、考える分（thinking）も `max_tokens` に数える。小さすぎると、返事が出る前に切れる。変えるときは、理由を説明してから変える
+- `max_tokens` は小さめにする（質問は 1024、結果は 2048。設定 `AI_MAX_TOKENS_QUESTIONS`、`AI_MAX_TOKENS_DIAGNOSIS`）。Claude Haiku 5.5 は、考える分（thinking）も `max_tokens` に数える。小さすぎると、返事が出る前に切れる。変えるときは、理由を説明してから変える
 - `output_config` の `effort` は `low` にする（考える量と費用を抑える）。返事の形は `output_config.format`（JSON スキーマ）で決める
 - 1回の呼び出しで待つ時間は12秒、やり直しは1回まで（設定 `AI_TIMEOUT_SECONDS`、`AI_MAX_RETRIES`）。合計を、gunicorn の時間切れ（30秒）より短くする
 - AI を使えるのは、ログインした人だけ。問診は1人1日5回まで（設定 `DAILY_CONSULTATION_LIMIT`、既定 5）
