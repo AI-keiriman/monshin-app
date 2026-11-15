@@ -36,7 +36,7 @@ def register():
         db.session.commit()
         login_user(user)
         flash("登録しました")
-        return redirect(url_for("main.index"))
+        return redirect(url_for("consultations.new"))
     status = 422 if form.is_submitted() else 200
     return render_template("auth/register.html", form=form), status
 
@@ -54,7 +54,9 @@ def login():
             flash("メールアドレスかパスワードが違います")
             return render_template("auth/login.html", form=form), 422
         login_user(user)
-        return redirect(safe_next(request.args.get("next")) or url_for("main.index"))
+        return redirect(
+            safe_next(request.args.get("next")) or url_for("consultations.new")
+        )
     status = 422 if form.is_submitted() else 200
     return render_template("auth/login.html", form=form), status
 

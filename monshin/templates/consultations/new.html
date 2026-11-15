@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "_form_errors.html" import field %}
+{% block content %}
+<h1>問診を始める</h1>
+<p>楽器の症状を教えてください。AI が、原因を絞るための質問を3つします。</p>
+
+{% if limit_reached %}
+  <article>今日の問診の回数が、上限（1日{{ limit }}回）に達しました。明日、もう一度お試しください。</article>
+{% endif %}
+
+<form method="post" action="{{ url_for('consultations.create') }}" enctype="multipart/form-data" novalidate>
+  {{ form.hidden_tag() }}
+  <fieldset>
+    <legend>{{ form.instrument.label.text }}</legend>
+    {% for choice in form.instrument %}<label>{{ choice() }} {{ choice.label.text }}</label>{% endfor %}
+    {% for e in form.instrument.errors %}<small>{{ e }}</small>{% endfor %}
+  </fieldset>
+  <label>
+    {{ form.symptom.label.text }}
+    {% if form.symptom.errors %}
+      {{ form.symptom(rows=5, placeholder="例：トーンノブを回しても、音が変わらない", aria_invalid="true") }}
+    {% else %}
+      {{ form.symptom(rows=5, placeholder="例：トーンノブを回しても、音が変わらない") }}
+    {% endif %}
+    {% for e in form.symptom.errors %}<small>{{ e }}</small>{% endfor %}
+  </label>
+  {{ field(form.image) }}
+  <label>
+    音声を追加（準備中）
+    <input type="file" disabled aria-describedby="audio-note">
+    <small id="audio-note">音声のアップロードは、準備中です。</small>
+  </label>
+  <button type="submit" {% if limit_reached %}disabled{% endif %}>問診を始める</button>
+</form>
+{% endblock %}

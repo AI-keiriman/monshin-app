@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>AI の質問に答える</h1>
+
+<article>
+  <header><strong>{{ consultation.instrument_label }}</strong></header>
+  <p style="white-space: pre-wrap">{{ consultation.symptom }}</p>
+  {% if consultation.image_filename %}
+    <img src="{{ url_for('consultations.photo', consultation_id=consultation.id) }}" alt="問診に付けた写真" style="max-width: 20rem">
+  {% endif %}
+</article>
+
+<p>原因を絞るために、次の3つの質問に答えてください。</p>
+
+<form method="post" action="{{ url_for('consultations.answers', consultation_id=consultation.id) }}" novalidate>
+  {{ form.hidden_tag() }}
+  {% for question in consultation.questions %}
+    {% set f = form.answer_fields[loop.index0] %}
+    <label>
+      質問{{ question.position }}：{{ question.question }}
+      {% if f.errors %}{{ f(rows=2, aria_invalid="true") }}{% else %}{{ f(rows=2) }}{% endif %}
+      {% for e in f.errors %}<small>{{ e }}</small>{% endfor %}
+    </label>
+  {% endfor %}
+  <button type="submit">結果を見る</button>
+</form>
+{% endblock %}
