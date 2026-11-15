@@ -4,7 +4,7 @@ import os
 from flask import Flask
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from monshin.extensions import csrf, db, migrate
+from monshin.extensions import csrf, db, login_manager, migrate
 
 
 def create_app(config=None):
@@ -29,11 +29,16 @@ def create_app(config=None):
     db.init_app(app)
     migrate.init_app(app, db)
     csrf.init_app(app)
-    # login_manager は、ログインの機能を作るときに init_app する（extensions.py に用意してある）
+    login_manager.init_app(app)
+    login_manager.login_view = "auth.login"
+    login_manager.login_message = "ログインしてください"
 
-    from monshin.views import main
+    # マイグレーションがテーブルを見つけられるように、モデルを読み込む
+    from monshin import models  # noqa: F401
+    from monshin.views import auth, main
 
-    app.register_blueprint(main.bp)
+    for module in (main, auth):
+        app.register_blueprint(module.bp)
 
     logging.basicConfig(level=logging.INFO)
     return app
