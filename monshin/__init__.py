@@ -1,10 +1,11 @@
 import logging
 import os
 
-from flask import Flask
+from flask import Flask, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from monshin.extensions import csrf, db, login_manager, migrate
+from monshin.services import ai
 
 
 def create_app(config=None):
@@ -17,6 +18,22 @@ def create_app(config=None):
             "DATABASE_URL", "sqlite:///monshin.sqlite"
         ),
         SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE") == "1",
+        # AI のモデル。既定は安くて速い Haiku
+        ANTHROPIC_MODEL=os.environ.get("ANTHROPIC_MODEL") or "claude-haiku-5-5",
+        # テストではフェイクを渡す。None なら本物の services/ai.py を使う
+        AI_SERVICE=None,
+        # 返事の長さの上限。考える分（thinking）もここに数えられるので、余裕を持たせる
+        AI_MAX_TOKENS_QUESTIONS=1024,
+        # 1回の呼び出しで待つ秒数と、やり直しの回数。合計で gunicorn の時間切れ（30秒）より短くする
+        AI_TIMEOUT_SECONDS=12.0,
+        AI_MAX_RETRIES=1,
+        # 1人が1日に始められる問診の数
+        DAILY_CONSULTATION_LIMIT=5,
+        # 写真は、公開のフォルダー（static/）の外に置く
+        UPLOAD_FOLDER=os.environ.get("UPLOAD_FOLDER")
+        or os.path.join(app.instance_path, "uploads"),
+        # 写真は5MB まで（フォームで確かめる）。それより大きく外れたリクエストは、読み込む前に 413 で止める
+        MAX_CONTENT_LENGTH=6 * 1024 * 1024,
     )
     if config is not None:
         app.config.update(config)
@@ -27,6 +44,8 @@ def create_app(config=None):
         )
 
     db.init_app(app)
+    # 外部 API はここで差し替えられるようにする（テストではフェイクを渡す）
+    app.extensions["ai"] = app.config["AI_SERVICE"] or ai
     migrate.init_app(app, db)
     csrf.init_app(app)
     login_manager.init_app(app)
@@ -35,10 +54,26 @@ def create_app(config=None):
 
     # マイグレーションがテーブルを見つけられるように、モデルを読み込む
     from monshin import models  # noqa: F401
-    from monshin.views import auth, main
+    from monshin.views import auth, consultations, main
 
-    for module in (main, auth):
+    for module in (main, auth, consultations):
         app.register_blueprint(module.bp)
+
+    from monshin import commands
+
+    commands.init_app(app)
+
+    @app.errorhandler(403)
+    def forbidden(error):
+        return render_template("errors/403.html"), 403
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return render_template("errors/404.html"), 404
+
+    @app.errorhandler(413)
+    def too_large(error):
+        return render_template("errors/413.html"), 413
 
     logging.basicConfig(level=logging.INFO)
     return app

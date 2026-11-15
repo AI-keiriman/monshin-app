@@ -13,7 +13,7 @@ def test_登録できる(client):
     response = register(client)
 
     assert response.status_code == 302
-    assert response.headers["Location"] == "/"
+    assert response.headers["Location"] == "/consultations/new"
     assert (
         "new@example.com" in client.get("/").text
     )  # 登録の後は、ログインした状態になる
@@ -86,7 +86,7 @@ def test_ログイン後のnextに外部URLは使えない(client, user):
             f"/login?next={target}",
             data={"email": user.email, "password": "password"},
         )
-        assert response.headers["Location"] == "/"
+        assert response.headers["Location"] == "/consultations/new"
         client.post("/logout")
 
 

@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h1>Hello</h1>
-  <p>ギター問診室の骨組みです。機能は、これから作ります。</p>
+  <h1>ギター問診室</h1>
+  <p>修理に出す前に、料金がわかるアプリです。</p>
+  <p>ギターやベースの症状を入力すると、AI が質問を3つします。答えると、考えられる原因と料金の目安が出ます。</p>
+  <a role="button" href="{{ url_for('consultations.new') }}">問診を始める</a>
 {% endblock %}
