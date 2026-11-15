@@ -33,7 +33,7 @@
 flowchart LR
     top[トップ] --> login[ログイン]
     top --> register[会員登録]
-    register --> login
+    register --> new
     login --> new[問診の入力]
     top --> new
     new -->|POST /consultations/| q[AI の質問に答える]
@@ -44,6 +44,7 @@ flowchart LR
     result --> list
 ```
 
+- 会員登録が済むと、自動でログインした状態になる。ログインの画面は通らない。
 - 状態が「質問に答える前」の問診を、結果の URL で開いたときは、質問の画面へ移す。
 - 状態が「結果あり」の問診を、質問の URL で開いたときは、結果の画面へ移す。
 
