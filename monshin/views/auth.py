@@ -1,3 +1,5 @@
+from urllib.parse import urlsplit
+
 from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required, login_user, logout_user
 
@@ -14,10 +16,17 @@ def load_user(user_id: str):
 
 
 def safe_next(target: str | None) -> str | None:
-    # 外部サイトへ飛ばされないように、"/" で始まる自サイトのパスだけを許す
-    if target and target.startswith("/") and not target.startswith("//"):
-        return target
-    return None
+    """ログインの後の移動先。自サイトのパスだけを許し、外部サイトへは飛ばさない"""
+    if not target or not target.startswith("/") or target.startswith("//"):
+        return None
+    # ブラウザーは、バックスラッシュを "/" と読み、タブや改行を取り除く。
+    # そのため "/\evil.example" や "/<タブ>/evil.example" は、外部サイトへの移動になる
+    if "\\" in target or any(ord(c) < 0x20 or ord(c) == 0x7F for c in target):
+        return None
+    parts = urlsplit(target)
+    if parts.scheme or parts.netloc:
+        return None
+    return target
 
 
 @bp.route("/register", methods=["GET", "POST"])

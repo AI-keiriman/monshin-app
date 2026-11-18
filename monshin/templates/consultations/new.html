@@ -30,6 +30,6 @@
     <input type="file" disabled aria-describedby="audio-note">
     <small id="audio-note">音声のアップロードは、準備中です。</small>
   </label>
-  <button type="submit" {% if limit_reached %}disabled{% endif %}>問診を始める</button>
+  <button type="submit" {% if limit_reached %}disabled{% else %}data-once{% endif %}>問診を始める</button>
 </form>
 {% endblock %}

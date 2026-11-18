@@ -467,3 +467,42 @@ def test_写真は公開のフォルダーに置かれない(app, client, user, 
 
     assert response.status_code == 404
     assert Path(app.static_folder) not in Path(app.config["UPLOAD_FOLDER"]).parents
+
+
+# --- レビューで足したテスト
+
+
+def test_5MBを超える写真は422で止める(app, client, user, login, fake_ai):
+    login(user)
+    over_limit = PNG + b"\x00" * (5 * 1024 * 1024 + 1)
+
+    response = post_consultation(client, image=(io.BytesIO(over_limit), "big.png"))
+
+    assert response.status_code == 422
+    assert "写真は5MB 以下にしてください" in response.text
+    assert count(Consultation) == 0
+    assert uploaded_files(app) == []
+    assert fake_ai.question_calls == []
+
+
+def test_上限は日本時間の0時で区切る(client, user, login, fake_ai, make_consultation):
+    login(user)
+    midnight = now_jst().replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # 昨日の 23:59:59 の問診は、今日の回数に数えない
+    for _ in range(5):
+        make_consultation(user, created_at=midnight - timedelta(seconds=1))
+    assert post_consultation(client).status_code == 302
+
+    # 今日の 0:00:00 の問診は、今日の回数に数える（上の1回と合わせて5回）
+    for _ in range(4):
+        make_consultation(user, created_at=midnight)
+    assert post_consultation(client).status_code == 429
+
+
+def test_送信のボタンは2回押せない印が付く(client, user, login, make_consultation):
+    login(user)
+    consultation = make_consultation(user)
+
+    assert "data-once" in client.get("/consultations/new").text
+    assert "data-once" in client.get(f"/consultations/{consultation.id}/questions").text

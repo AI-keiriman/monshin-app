@@ -81,7 +81,15 @@ def test_登録していないメールアドレスではログインできな�
 
 
 def test_ログイン後のnextに外部URLは使えない(client, user):
-    for target in ("https://evil.example.com/", "//evil.example.com/"):
+    for target in (
+        "https://evil.example.com/",
+        "//evil.example.com/",
+        # ブラウザーは、バックスラッシュ（%5C）を "/" と読む
+        "/%5Cevil.example.com/",
+        # ブラウザーは、タブと改行を取り除く
+        "/%09/evil.example.com/",
+        "/%0A/evil.example.com/",
+    ):
         response = client.post(
             f"/login?next={target}",
             data={"email": user.email, "password": "password"},
@@ -148,3 +156,12 @@ def test_CSRFトークンが無いPOSTは受け付けない():
         )
         assert response.status_code == 302
         db.session.remove()
+
+
+def test_長すぎるパスワードでは登録もログインもできない(client, user):
+    too_long = "a" * 129
+
+    assert register(client, password=too_long).status_code == 422
+    response = client.post("/login", data={"email": user.email, "password": too_long})
+    assert response.status_code == 422
+    assert "128文字以内" in response.text

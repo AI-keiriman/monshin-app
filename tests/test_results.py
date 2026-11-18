@@ -3,7 +3,12 @@ import io
 import pytest
 
 from monshin.extensions import db
-from monshin.models import Consultation, ConsultationCause, PriceRule
+from monshin.models import (
+    Consultation,
+    ConsultationCause,
+    ConsultationStatus,
+    PriceRule,
+)
 from monshin.services.ai import AIError, Cause, Diagnosis
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 32
@@ -406,3 +411,50 @@ def test_未ログインで一覧を開くとログイン画面へ(client):
 
     assert response.status_code == 302
     assert response.headers["Location"].startswith("/login?next=")
+
+
+# --- レビューで足したテスト
+
+
+def test_診断の途中で同じ答えがもう一度届いても500にならない(
+    client, user, login, fake_ai, make_consultation
+):
+    consultation = make_consultation(user)
+    consultation_id = consultation.id
+    login(user)
+    original = fake_ai.diagnose
+
+    def diagnose_while_another_request_finishes(*args, **kwargs):
+        diagnosis = original(*args, **kwargs)
+        # AI を待つあいだに、もう1つのリクエストが先に結果を保存した状態を作る
+        for position, cause in enumerate(diagnosis.causes, start=1):
+            db.session.add(
+                ConsultationCause(
+                    consultation_id=consultation_id,
+                    position=position,
+                    name=cause.name,
+                    description=cause.description,
+                )
+            )
+        saved = db.session.get(Consultation, consultation_id)
+        saved.status = ConsultationStatus.DONE
+        db.session.commit()
+        return diagnosis
+
+    fake_ai.diagnose = diagnose_while_another_request_finishes
+
+    response = post_answers(client, consultation)
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == f"/consultations/{consultation_id}"
+    assert count(ConsultationCause) == 2  # 原因は、先に終わった方の2件だけ
+    assert client.get(f"/consultations/{consultation_id}").status_code == 200
+
+
+def test_選択肢に無い出口には日本語の画面を返す(client, user, make_done_consultation):
+    consultation = make_done_consultation(user)
+
+    response = choose(client, consultation, "delete")
+
+    assert response.status_code == 422
+    assert "送られた内容を受け付けられません" in response.text
