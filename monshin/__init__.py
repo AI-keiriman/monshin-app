@@ -1,5 +1,6 @@
 import logging
 import os
+import secrets
 
 from flask import Flask, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -13,11 +14,13 @@ def create_app(config=None):
     # 本番は nginx の後ろで動かす。nginx が付けたヘッダーから、元の IP と https を読み取る
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)
     app.config.from_mapping(
-        SECRET_KEY=os.environ.get("SECRET_KEY") or "dev",
+        SECRET_KEY=os.environ.get("SECRET_KEY") or None,
         SQLALCHEMY_DATABASE_URI=os.environ.get(
             "DATABASE_URL", "sqlite:///monshin.sqlite"
         ),
         SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE") == "1",
+        # ほかのサイトからの POST には、ログインの Cookie を付けない
+        SESSION_COOKIE_SAMESITE="Lax",
         # AI のモデル。既定は安くて速い Haiku
         ANTHROPIC_MODEL=os.environ.get("ANTHROPIC_MODEL") or "claude-haiku-5-5",
         # テストではフェイクを渡す。None なら本物の services/ai.py を使う
@@ -38,11 +41,15 @@ def create_app(config=None):
     )
     if config is not None:
         app.config.update(config)
-    if app.config["SECRET_KEY"] == "dev" and not (app.debug or app.testing):
-        # 本番で SECRET_KEY を設定し忘れると、セッションを偽造される。起動を止めて気づかせる
-        raise RuntimeError(
-            "SECRET_KEY を .env（本番は EnvironmentFile）に設定してください"
-        )
+    if not app.config["SECRET_KEY"]:
+        if not (app.debug or app.testing):
+            # 本番で SECRET_KEY を設定し忘れると、セッションを偽造される。起動を止めて気づかせる
+            raise RuntimeError(
+                "SECRET_KEY を .env（本番は EnvironmentFile）に設定してください"
+            )
+        # 開発とテストでは、起動のたびに乱数の鍵を作る。
+        # だれでも知っている固定の鍵は使わない（本番に FLASK_DEBUG=1 が残っても、偽造されない）
+        app.config["SECRET_KEY"] = secrets.token_hex(32)
 
     db.init_app(app)
     # 外部 API はここで差し替えられるようにする（テストではフェイクを渡す）
@@ -81,6 +88,16 @@ def create_app(config=None):
     @app.errorhandler(413)
     def too_large(error):
         return render_template("errors/413.html"), 413
+
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return render_template("errors/422.html"), 422
+
+    @app.errorhandler(500)
+    def server_error(error):
+        # 途中まで進んだ DB の変更を取り消してから、画面を出す
+        db.session.rollback()
+        return render_template("errors/500.html"), 500
 
     logging.basicConfig(level=logging.INFO)
     return app

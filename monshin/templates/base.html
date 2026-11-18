@@ -34,5 +34,22 @@
     {% endfor %}
     {% block content %}{% endblock %}
   </main>
+  <script>
+    // AI を呼ぶフォームの送信のボタン（data-once）を、2回押せないようにする
+    document.addEventListener("submit", (event) => {
+      const button = event.target.querySelector("button[data-once]");
+      if (button) {
+        button.disabled = true;
+        button.setAttribute("aria-busy", "true");
+      }
+    });
+    // ブラウザーの「戻る」で戻ったときは、もう一度押せるようにする
+    window.addEventListener("pageshow", () => {
+      document.querySelectorAll("button[data-once]").forEach((button) => {
+        button.disabled = false;
+        button.removeAttribute("aria-busy");
+      });
+    });
+  </script>
 </body>
 </html>

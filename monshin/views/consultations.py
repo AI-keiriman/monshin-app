@@ -12,6 +12,7 @@ from flask import (
     url_for,
 )
 from flask_login import current_user, login_required
+from sqlalchemy.exc import IntegrityError
 
 from monshin.extensions import db
 from monshin.forms import AnswersForm, ConsultationForm
@@ -240,8 +241,13 @@ def answers(consultation_id: int):
     consultation.price_rule = rule
     consultation.status = ConsultationStatus.DONE
     consultation.completed_at = now_jst()
-    db.session.commit()
-    return redirect(url_for("consultations.show", consultation_id=consultation.id))
+    try:
+        db.session.commit()
+    except IntegrityError:
+        # 同じ答えが2回届いたとき（ボタンを2回押したとき）。
+        # 先に終わった方が結果を保存しているので、こちらは取り消して、その結果を見せる
+        db.session.rollback()
+    return redirect(url_for("consultations.show", consultation_id=consultation_id))
 
 
 @bp.route("/<int:consultation_id>")

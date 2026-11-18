@@ -12,6 +12,12 @@ EMAIL = Regexp(
 
 SYMPTOM_MAX_LENGTH = 1000
 ANSWER_MAX_LENGTH = 500
+# 長すぎるパスワードは、ハッシュの計算でサーバーに負荷をかける。上限を決めておく
+PASSWORD_MAX_LENGTH = 128
+PASSWORD_TOO_LONG = Length(
+    max=PASSWORD_MAX_LENGTH,
+    message=f"パスワードは{PASSWORD_MAX_LENGTH}文字以内で入力してください",
+)
 
 
 def strip(value: str | None) -> str | None:
@@ -34,6 +40,7 @@ class RegisterForm(FlaskForm):
         validators=[
             DataRequired(message="パスワードを入力してください"),
             Length(min=8, message="パスワードは8文字以上で入力してください"),
+            PASSWORD_TOO_LONG,
         ],
     )
 
@@ -46,7 +53,10 @@ class LoginForm(FlaskForm):
     )
     password = PasswordField(
         "パスワード",
-        validators=[DataRequired(message="パスワードを入力してください")],
+        validators=[
+            DataRequired(message="パスワードを入力してください"),
+            PASSWORD_TOO_LONG,
+        ],
     )
 
 
