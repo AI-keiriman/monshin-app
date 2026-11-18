@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}ギター問診室{% endblock %}</title>
+  <title>{% block title %}ギター修理の AI 見積{% endblock %}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   {% block head %}{% endblock %}
 </head>
 <body>
   <header class="container">
     <nav>
-      <ul><li><a href="{{ url_for('main.index') }}"><strong>ギター問診室</strong></a></li></ul>
+      <ul><li><a href="{{ url_for('main.index') }}"><strong>ギター修理の AI 見積</strong></a></li></ul>
       <ul>
         {% if current_user.is_authenticated %}
           <li><a href="{{ url_for('consultations.index') }}">問診の一覧</a></li>

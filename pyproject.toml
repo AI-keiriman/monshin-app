@@ -1,7 +1,7 @@
 [project]
 name = "monshin-app"
 version = "0.1.0"
-description = "ギター問診室（八幡平市スパルタキャンプ 2026年11月 Python編 自主制作）"
+description = "ギター修理の AI 見積（八幡平市スパルタキャンプ 2026年11月 Python編 自主制作）"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [

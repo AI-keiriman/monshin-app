@@ -159,7 +159,7 @@ def test_料金表が空だと結果を出さずAIも呼ばない(
 # --- 診断の結果の画面
 
 
-def test_結果の画面に原因と料金の目安が出る(client, user, make_done_consultation):
+def test_結果の画面に原因と料金の見積が出る(client, user, make_done_consultation):
     consultation = make_done_consultation(user)
 
     response = client.get(f"/consultations/{consultation.id}")
@@ -196,7 +196,7 @@ def test_料金の表示は3通り(
 
 
 def test_料金はAIではなく料金表から引く(client, user, fake_ai, make_done_consultation):
-    # AI が説明の中に金額を書いても、料金の目安は料金表の値のまま
+    # AI が説明の中に金額を書いても、料金の見積は料金表の値のまま
     fake_ai.diagnosis = Diagnosis(
         causes=[Cause("ポットの故障", "修理代は999,999円です。")], category_code="pot"
     )
@@ -311,7 +311,7 @@ def test_手放すを選ぶと準備中の枠が出て金額は出ない(
 
     assert "買い取りの目安（準備中）" not in before
     assert "買い取りの目安（準備中）" in after
-    # 金額は、料金の目安の1か所だけ。買い取りの金額は出ない
+    # 金額は、料金の見積の1か所だけ。買い取りの金額は出ない
     assert after.count("円") == before.count("円")
 
 
