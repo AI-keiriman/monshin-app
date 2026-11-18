@@ -93,7 +93,7 @@ class PriceRule(db.Model):
 
     @property
     def price_text(self) -> str:
-        """料金の目安の表示。下限と上限、下限だけ、どちらも無い、の3通り"""
+        """料金の見積の表示。下限と上限、下限だけ、どちらも無い、の3通り"""
         if self.min_price is None:
             return "要見積もり"
         if self.max_price is None:
