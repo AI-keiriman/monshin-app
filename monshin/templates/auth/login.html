@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% from "_form_errors.html" import field %}
 {% block content %}
+<div class="split">
+  <img src="{{ url_for('static', filename='img/workshop-body.jpg') }}" alt="塗装の前のギターのボディ" width="900" height="1200">
+  <div>
 <h1>ログイン</h1>
 <form method="post" novalidate>
   {{ form.hidden_tag() }}
@@ -9,4 +12,6 @@
   <button type="submit">ログイン</button>
 </form>
 <p>はじめての方は、<a href="{{ url_for('auth.register') }}">会員登録</a>をしてください。</p>
+  </div>
+</div>
 {% endblock %}

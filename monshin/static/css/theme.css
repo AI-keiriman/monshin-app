@@ -40,6 +40,15 @@
   --pico-primary-hover-border: var(--monshin-brown-dark);
   --pico-primary-focus: rgba(112, 44, 0, 0.35);
   --pico-primary-inverse: #ffffff;
+  /* 「ファイルを選択」のボタンなど。Pico の初めの色は青みがあるので、黒に寄せる */
+  --pico-secondary: #3a3a3a;
+  --pico-secondary-background: #3a3a3a;
+  --pico-secondary-border: #3a3a3a;
+  --pico-secondary-hover: var(--monshin-ink);
+  --pico-secondary-hover-background: var(--monshin-ink);
+  --pico-secondary-hover-border: var(--monshin-ink);
+  --pico-secondary-focus: rgba(58, 58, 58, 0.35);
+  --pico-secondary-inverse: #ffffff;
 }
 
 /* 見出し：中央にそろえ、字の間を少し広げる */
@@ -158,6 +167,33 @@ main.container {
   font-size: 0.95rem;
   margin: 0;
 }
+/* ログインと会員登録：左に縦長の写真、右に入力欄 */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 3.5rem;
+  align-items: center;
+}
+.split img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 36rem;
+  object-fit: cover;
+}
+@media (max-width: 640px) {
+  .split {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .split img {
+    max-height: 13rem;
+  }
+  /* 幅が狭いと3枚が重なるので、中央の1枚だけにする */
+  .site-footer--photo {
+    background: var(--monshin-ink) url("../img/workshop-head.jpg") center / auto 100% no-repeat;
+  }
+}
 .lead {
   text-align: center;
   max-width: 38rem;
@@ -218,4 +254,21 @@ main.container {
   font-size: 0.85rem;
   letter-spacing: 0.08em;
   padding: 2rem 1rem;
+}
+/* 下の帯の背景を、工房の写真にする（問診の入力の画面）。写真は、作るときに暗くしてある */
+.site-footer--photo {
+  /* 帯は細くし、写真は切らずに全体を見せる（高さに合わせて置き、左右は黒のまま） */
+  /* 3枚（どれも横4：縦3）を、同じ間隔で並べる。帯の左右の端にも、同じ幅の黒が入る。
+     写真の幅は「帯の高さ × 4/3」。左の写真の位置は「25% − 高さ × 2/3」で、4つのすき間が同じ幅になる */
+  --footer-height: clamp(8rem, 14vw, 11rem);
+  background:
+    url("../img/workshop-left.jpg") calc(25% - var(--footer-height) * 2 / 3) center / auto 100% no-repeat,
+    url("../img/workshop-right.jpg") calc(75% + var(--footer-height) * 2 / 3) center / auto 100% no-repeat,
+    url("../img/workshop-head.jpg") center / auto 100% no-repeat,
+    var(--monshin-ink);
+  color: #ffffff;
+  height: var(--footer-height);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
