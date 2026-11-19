@@ -16,6 +16,7 @@ erDiagram
     users {
         int id PK
         string email UK
+        string name "nullable。アカウント名"
         string password_hash
         datetime created_at
     }
@@ -64,7 +65,8 @@ erDiagram
 | カラム | 型 | 制約 | 説明 |
 |-|-|-|-|
 | id | Integer | PK | |
-| email | String(255) | not null, unique | 小文字にそろえて保存する |
+| email | String(255) | not null, unique | 小文字にそろえて保存する。画面には出さない |
+| name | String(30) | nullable | アカウント名。画面の上の帯に出す。登録のときは必須（フォームで確かめる）。この欄ができる前に登録した人は空 |
 | password_hash | String(255) | not null | `generate_password_hash` の結果。平文は保存しない |
 | created_at | DateTime | not null, default 現在時刻（日本時間） | 登録日時 |
 

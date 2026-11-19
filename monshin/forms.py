@@ -1,9 +1,9 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField, FileSize
-from wtforms import EmailField, PasswordField, RadioField, TextAreaField
+from wtforms import EmailField, PasswordField, RadioField, StringField, TextAreaField
 from wtforms.validators import DataRequired, Length, Regexp
 
-from monshin.models import INSTRUMENT_LABELS, Instrument
+from monshin.models import INSTRUMENT_LABELS, NAME_MAX_LENGTH, Instrument
 
 # email-validator パッケージを足さずに済むよう、形だけを正規表現で確かめる
 EMAIL = Regexp(
@@ -26,6 +26,17 @@ def strip(value: str | None) -> str | None:
 
 
 class RegisterForm(FlaskForm):
+    name = StringField(
+        f"アカウント名（{NAME_MAX_LENGTH}文字まで。画面の上に表示されます）",
+        filters=[strip],
+        validators=[
+            DataRequired(message="アカウント名を入力してください"),
+            Length(
+                max=NAME_MAX_LENGTH,
+                message=f"アカウント名は{NAME_MAX_LENGTH}文字以内で入力してください",
+            ),
+        ],
+    )
     email = EmailField(
         "メールアドレス",
         filters=[strip],

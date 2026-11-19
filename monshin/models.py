@@ -10,6 +10,8 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from monshin.extensions import db
 
 JST = ZoneInfo("Asia/Tokyo")
+# アカウント名の長さの上限
+NAME_MAX_LENGTH = 30
 
 
 def now_jst() -> datetime:
@@ -65,6 +67,9 @@ class User(UserMixin, db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     # 小文字にそろえて保存する
     email: Mapped[str] = mapped_column(String(255), unique=True)
+    # 画面の上の帯に出す名前。メールアドレスを画面に出さないために使う。
+    # この欄ができる前に登録した人は、空（None）のまま
+    name: Mapped[str | None] = mapped_column(String(NAME_MAX_LENGTH))
     password_hash: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(default=now_jst)
 

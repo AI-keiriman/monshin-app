@@ -39,7 +39,7 @@ def register():
         if db.session.scalar(db.select(User).filter_by(email=email)):
             form.email.errors.append("このメールアドレスは登録済みです")
             return render_template("auth/register.html", form=form), 422
-        user = User(email=email)
+        user = User(email=email, name=form.name.data)
         user.set_password(form.password.data)
         db.session.add(user)
         db.session.commit()
