@@ -189,10 +189,6 @@ main.container {
   .split img {
     max-height: 13rem;
   }
-  /* 幅が狭いと3枚が重なるので、中央の1枚だけにする */
-  .site-footer--photo {
-    background: var(--monshin-ink) url("../img/workshop-head.jpg") center / auto 100% no-repeat;
-  }
 }
 .lead {
   text-align: center;
@@ -258,16 +254,10 @@ main.container {
 /* 下の帯の背景を、工房の写真にする（問診の入力の画面）。写真は、作るときに暗くしてある */
 .site-footer--photo {
   /* 帯は細くし、写真は切らずに全体を見せる（高さに合わせて置き、左右は黒のまま） */
-  /* 3枚（どれも横4：縦3）を、同じ間隔で並べる。帯の左右の端にも、同じ幅の黒が入る。
-     写真の幅は「帯の高さ × 4/3」。左の写真の位置は「25% − 高さ × 2/3」で、4つのすき間が同じ幅になる */
-  --footer-height: clamp(8rem, 14vw, 11rem);
-  background:
-    url("../img/workshop-left.jpg") calc(25% - var(--footer-height) * 2 / 3) center / auto 100% no-repeat,
-    url("../img/workshop-right.jpg") calc(75% + var(--footer-height) * 2 / 3) center / auto 100% no-repeat,
-    url("../img/workshop-head.jpg") center / auto 100% no-repeat,
-    var(--monshin-ink);
+  /* 作業台の横長の写真（横4.5：縦1）を、帯の幅いっぱいに置く */
+  background: var(--monshin-ink) url("../img/workshop-bench.jpg") center / cover no-repeat;
   color: #ffffff;
-  height: var(--footer-height);
+  height: clamp(8rem, 18vw, 14rem);
   display: flex;
   align-items: flex-end;
   justify-content: center;
