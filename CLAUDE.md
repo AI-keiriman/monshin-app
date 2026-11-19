@@ -74,7 +74,7 @@
 - 要件定義: [docs/spec/requirements.md](docs/spec/requirements.md)
 - 画面一覧: [docs/design/screens.md](docs/design/screens.md)
 - データベース設計: [docs/design/database.md](docs/design/database.md)
-- 用語: 問診（consultations。持ち主が症状を伝えてから結果が出るまでの1回分）、質問と答え（consultation_questions）、原因の候補（consultation_causes）、料金表（price_rules）、出口（choice。直す `repair` / 手放す `sell` / そのまま使う `keep`）
+- 用語: 問診（consultations。持ち主が症状を伝えてから結果が出るまでの1回分）、質問と答え（consultation_questions）、原因の候補（consultation_causes）、料金表（price_rules）、出口（choice。修理を依頼 `repair` / 買取査定 `sell` / そのまま使う `keep`。ボタンの名前は「修理依頼に進む」「ホームに戻る」「買取査定をする」）
 
 ### 画面と URL
 
@@ -110,8 +110,9 @@
 
 範囲を広げない。頼まれても、先に「やらないことの一覧にある」と伝える。
 
-- 音声の受け取り、保存、AI による読み取り（問診の入力の画面に、押せない欄「音声を追加（準備中）」だけを出す）
-- 買い取りの査定と申し込み（結果の画面に、枠「買い取りの目安（準備中）」だけを出す）
+- 音声の受け取り、保存、AI による読み取り（問診の入力の画面に、欄「音声・動画を追加（任意）」だけを出す。ファイルは選べるが、サーバーには送らない）
+- 買い取りの査定と申し込み（結果の画面で「買取査定をする」を選ぶと、枠「買取査定」だけを出す）
+- 修理の依頼の受け付けと送信（結果の画面で「修理依頼に進む」を選ぶと、枠「修理の依頼」だけを出す）
 - 工房の側の画面（問診票の一覧、返信、見積）
 - 修理の予約、決済、メールの送信
 - AI との自由な会話（何往復もするチャット）

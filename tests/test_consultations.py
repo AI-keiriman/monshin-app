@@ -45,13 +45,15 @@ def test_問診の入力の画面が出る(client, user, login):
     assert "アコースティックギター" in response.text
 
 
-def test_音声の欄は準備中で押せない(client, user, login):
+def test_音声と動画の欄は選べるがサーバーには送らない(client, user, login):
     login(user)
 
     text = client.get("/consultations/new").text
 
-    assert "音声を追加（準備中）" in text
-    assert '<input type="file" disabled' in text
+    assert "音声・動画を追加（任意）" in text
+    assert "準備中" not in text
+    # name が無い欄は、ブラウザーが送らない（今は、欄だけ）
+    assert '<input type="file" accept="audio/*,video/*">' in text
 
 
 # --- 問診を作る
@@ -506,3 +508,85 @@ def test_送信のボタンは2回押せない印が付く(client, user, login, 
 
     assert "data-once" in client.get("/consultations/new").text
     assert "data-once" in client.get(f"/consultations/{consultation.id}/questions").text
+
+
+# --- 楽器の情報（メーカー、機種名、使用年数。どれも任意）
+
+ANSWERS = {"answer_1": "変わりません", "answer_2": "出ます", "answer_3": "動きます"}
+
+
+def test_楽器の情報を入れると保存されAIにも渡る(client, user, login, fake_ai):
+    login(user)
+
+    response = post_consultation(
+        client, maker=" 見本楽器 ", model_name="モデルA", years_used="10"
+    )
+
+    consultation = db.session.scalar(db.select(Consultation))
+    assert response.status_code == 302
+    assert consultation.maker == "見本楽器"  # 前後の空白は取る
+    assert consultation.model_name == "モデルA"
+    assert consultation.years_used == 10
+    # 症状の文は、そのまま保存する。AI には、楽器の情報を後ろに添えて渡す
+    assert consultation.symptom == "トーンノブが効かない"
+    sent = fake_ai.question_calls[0]["symptom"]
+    assert sent.startswith("トーンノブが効かない")
+    assert "メーカー：見本楽器" in sent
+    assert "機種名：モデルA" in sent
+    assert "使用年数：10年" in sent
+
+    # 質問の画面にも出る。診断のときも、AI に渡る
+    assert "使用年数：10年" in client.get(response.headers["Location"]).text
+    client.post(f"/consultations/{consultation.id}/answers", data=ANSWERS)
+    assert "メーカー：見本楽器" in fake_ai.diagnose_calls[0]["symptom"]
+    assert "機種名：モデルA" in client.get(f"/consultations/{consultation.id}").text
+
+
+def test_楽器の情報は空のままでも問診を始められる(client, user, login, fake_ai):
+    login(user)
+
+    response = post_consultation(client, maker="", model_name="", years_used="")
+
+    consultation = db.session.scalar(db.select(Consultation))
+    assert response.status_code == 302
+    assert consultation.maker is None
+    assert consultation.model_name is None
+    assert consultation.years_used is None
+    # 情報が無いときは、症状の文だけを AI に渡す
+    assert fake_ai.question_calls[0]["symptom"] == "トーンノブが効かない"
+    assert "メーカー" not in client.get(response.headers["Location"]).text
+
+
+def test_使用年数が0年でも保存される(client, user, login, fake_ai):
+    login(user)
+
+    post_consultation(client, years_used="0")
+
+    assert db.session.scalar(db.select(Consultation)).years_used == 0
+    assert "使用年数：0年" in fake_ai.question_calls[0]["symptom"]
+
+
+def test_使用年数が数字でないときは問診を作らない(client, user, login, fake_ai):
+    login(user)
+
+    for value in ("十年", "-1", "101", "1.5"):
+        response = post_consultation(client, years_used=value)
+        assert response.status_code == 422
+        assert "0〜100 の数字で入力してください" in response.text
+
+    assert count(Consultation) == 0
+    assert fake_ai.question_calls == []
+
+
+def test_長すぎるメーカーと機種名では問診を作らない(client, user, login, fake_ai):
+    login(user)
+
+    response = post_consultation(client, maker="あ" * 51)
+    assert response.status_code == 422
+    assert "メーカーは50文字以内" in response.text
+    response = post_consultation(client, model_name="あ" * 51)
+    assert response.status_code == 422
+    assert "機種名は50文字以内" in response.text
+
+    assert count(Consultation) == 0
+    assert fake_ai.question_calls == []

@@ -177,7 +177,7 @@ def test_結果の画面に原因と料金の見積が出る(client, user, make_
     # 質問と答えも見られる
     assert "変わりません" in response.text
     # 3つの出口のボタンがある
-    for label in ("直す", "手放す", "そのまま使う"):
+    for label in ("修理依頼に進む", "ホームに戻る", "買取査定をする"):
         assert label in response.text
 
 
@@ -291,7 +291,7 @@ def test_出口を選ぶと保存される(client, user, make_done_consultation)
     assert response.headers["Location"] == f"/consultations/{consultation.id}"
     assert consultation.choice == "repair"
     assert (
-        "今の選択：<strong>直す</strong>"
+        "今の選択：<strong>修理を依頼</strong>"
         in client.get(f"/consultations/{consultation.id}").text
     )
 
@@ -305,7 +305,7 @@ def test_出口は選び直せる(client, user, make_done_consultation):
     assert consultation.choice == "keep"
 
 
-def test_手放すを選ぶと準備中の枠が出て金額は出ない(
+def test_買取査定をするを選ぶと枠が出て金額は出ない(
     client, user, make_done_consultation
 ):
     consultation = make_done_consultation(user)
@@ -314,10 +314,49 @@ def test_手放すを選ぶと準備中の枠が出て金額は出ない(
     choose(client, consultation, "sell")
     after = client.get(f"/consultations/{consultation.id}").text
 
-    assert "買い取りの目安（準備中）" not in before
-    assert "買い取りの目安（準備中）" in after
+    assert "買い取りの目安をお出しします" not in before
+    assert "買い取りの目安をお出しします" in after
+    assert "今の選択：<strong>買取査定</strong>" in after
     # 金額は、料金の見積の1か所だけ。買い取りの金額は出ない
     assert after.count("円") == before.count("円")
+
+
+def test_修理依頼に進むを選ぶと修理の依頼の枠が出る(
+    client, user, make_done_consultation
+):
+    consultation = make_done_consultation(user)
+
+    choose(client, consultation, "repair")
+    text = client.get(f"/consultations/{consultation.id}").text
+
+    assert "工房が楽器の状態を確かめて、正式な見積と納期をお知らせします" in text
+    assert "買い取りの目安をお出しします" not in text
+
+
+def test_ホームに戻るを選ぶと保存してトップへ移る(client, user, make_done_consultation):
+    consultation = make_done_consultation(user)
+
+    response = choose(client, consultation, "keep")
+
+    assert response.status_code == 302
+    assert response.headers["Location"] == "/"
+    assert consultation.choice == "keep"
+
+
+def test_出口のボタンは3つで名前を見れば動きが分かる(
+    client, user, make_done_consultation
+):
+    consultation = make_done_consultation(user)
+
+    text = client.get(f"/consultations/{consultation.id}").text
+
+    # 並びは、修理依頼に進む → ホームに戻る → 買取査定をする
+    positions = [
+        text.index(label)
+        for label in ("修理依頼に進む", "ホームに戻る", "買取査定をする")
+    ]
+    assert positions == sorted(positions)
+    assert "準備中" not in text
 
 
 def test_選択肢に無い出口は保存しない(client, user, make_done_consultation):

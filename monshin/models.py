@@ -44,16 +44,24 @@ STATUS_LABELS = {
 
 
 class Choice(StrEnum):
-    REPAIR = "repair"  # 直す
-    SELL = "sell"  # 手放す
-    KEEP = "keep"  # そのまま使う
+    REPAIR = "repair"  # 修理を依頼する
+    SELL = "sell"  # 買取査定をする
+    KEEP = "keep"  # そのまま使う（何もせずにホームに戻る）
 
 
+# 選んだ出口の名前。「今の選択」と、問診の一覧に出す
 CHOICE_LABELS = {
-    Choice.REPAIR: "直す",
-    Choice.SELL: "手放す",
+    Choice.REPAIR: "修理を依頼",
+    Choice.SELL: "買取査定",
     Choice.KEEP: "そのまま使う",
 }
+
+# 結果の画面のボタン。並べる順に書く。名前を見れば、押した後に何が起きるかが分かるようにする
+CHOICE_BUTTONS = [
+    (Choice.REPAIR, "修理依頼に進む"),
+    (Choice.KEEP, "ホームに戻る"),
+    (Choice.SELL, "買取査定をする"),
+]
 
 
 def yen(value: int) -> str:
@@ -106,6 +114,30 @@ class PriceRule(db.Model):
         return f"{yen(self.min_price)}〜{yen(self.max_price)}"
 
 
+# メーカーと機種名の長さの上限、使用年数の上限
+INSTRUMENT_INFO_MAX_LENGTH = 50
+YEARS_USED_MAX = 100
+
+
+def instrument_info_text(
+    maker: str | None, model_name: str | None, years_used: int | None
+) -> str:
+    """楽器の情報を「メーカー：○○　機種名：○○　使用年数：○年」の形にする。無い項目は書かない"""
+    parts = []
+    if maker:
+        parts.append(f"メーカー：{maker}")
+    if model_name:
+        parts.append(f"機種名：{model_name}")
+    if years_used is not None:
+        parts.append(f"使用年数：{years_used}年")
+    return "　".join(parts)
+
+
+def symptom_with_info(symptom: str, info: str) -> str:
+    """AI に渡す症状の文。楽器の情報があれば、症状の後ろに添える"""
+    return f"{symptom}\n\n楽器の情報：{info}" if info else symptom
+
+
 class Consultation(db.Model):
     """問診。持ち主が症状を伝えてから、結果が出るまでの1回分"""
 
@@ -120,6 +152,10 @@ class Consultation(db.Model):
     symptom: Mapped[str] = mapped_column(Text)
     # サーバーが付け直したファイル名（UUID + 拡張子）。写真なしは NULL
     image_filename: Mapped[str | None] = mapped_column(String(255))
+    # 楽器の情報。どれも任意。AI に、症状と一緒に渡す
+    maker: Mapped[str | None] = mapped_column(String(INSTRUMENT_INFO_MAX_LENGTH))
+    model_name: Mapped[str | None] = mapped_column(String(INSTRUMENT_INFO_MAX_LENGTH))
+    years_used: Mapped[int | None]
     status: Mapped[str] = mapped_column(String(20), default=ConsultationStatus.ASKING)
     # AI が選んだ料金表の分類。結果ができたときに入る
     price_rule_id: Mapped[int | None] = mapped_column(
@@ -142,6 +178,15 @@ class Consultation(db.Model):
     @property
     def instrument_label(self) -> str:
         return INSTRUMENT_LABELS[Instrument(self.instrument)]
+
+    @property
+    def instrument_info(self) -> str:
+        """画面に出す、楽器の情報の1行。何も無ければ空の文字列"""
+        return instrument_info_text(self.maker, self.model_name, self.years_used)
+
+    @property
+    def symptom_for_ai(self) -> str:
+        return symptom_with_info(self.symptom, self.instrument_info)
 
     @property
     def status_label(self) -> str:

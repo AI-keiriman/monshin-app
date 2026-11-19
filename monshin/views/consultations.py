@@ -17,7 +17,7 @@ from sqlalchemy.exc import IntegrityError
 from monshin.extensions import db
 from monshin.forms import AnswersForm, ConsultationForm
 from monshin.models import (
-    CHOICE_LABELS,
+    CHOICE_BUTTONS,
     INSTRUMENT_LABELS,
     Choice,
     Consultation,
@@ -26,7 +26,9 @@ from monshin.models import (
     ConsultationStatus,
     Instrument,
     PriceRule,
+    instrument_info_text,
     now_jst,
+    symptom_with_info,
 )
 from monshin.services.ai import AIError
 from monshin.uploads import detect_media_type, save_image, upload_folder
@@ -149,10 +151,17 @@ def create():
 
     # 3. AI に質問を作らせる
     instrument = Instrument(form.instrument.data)
+    # 楽器の情報（任意）。空の欄は None にする。AI には、症状の後ろに添えて渡す
+    maker = form.maker.data or None
+    model_name = form.model_name.data or None
+    years_used = int(form.years_used.data) if form.years_used.data else None
+    info = instrument_info_text(maker, model_name, years_used)
     ai = current_app.extensions["ai"]
     try:
         questions = ai.generate_questions(
-            INSTRUMENT_LABELS[instrument], form.symptom.data, image
+            INSTRUMENT_LABELS[instrument],
+            symptom_with_info(form.symptom.data, info),
+            image,
         )
     except AIError:
         # 5. 失敗したら、何も保存しない。入力した文は、フォームに残る
@@ -164,6 +173,9 @@ def create():
         user_id=current_user.id,
         instrument=instrument,
         symptom=form.symptom.data,
+        maker=maker,
+        model_name=model_name,
+        years_used=years_used,
     )
     if image:
         consultation.image_filename = save_image(*image)
@@ -217,7 +229,7 @@ def answers(consultation_id: int):
         # 3. AI は、原因の候補（最大3つ）と、料金表の分類を1つ返す
         diagnosis = ai.diagnose(
             consultation.instrument_label,
-            consultation.symptom,
+            consultation.symptom_for_ai,
             [(q.question, q.answer) for q in consultation.questions],
             [(r.code, r.label, r.symptom_example) for r in rules],
             load_image(consultation),
@@ -263,14 +275,14 @@ def show(consultation_id: int):
     return render_template(
         "consultations/show.html",
         consultation=consultation,
-        choices=[(c.value, CHOICE_LABELS[c]) for c in Choice],
+        choices=[(c.value, label) for c, label in CHOICE_BUTTONS],
     )
 
 
 @bp.route("/<int:consultation_id>/choice", methods=["POST"])
 @login_required
 def choose(consultation_id: int):
-    """出口（直す／手放す／そのまま使う）を保存する。選び直せる"""
+    """出口（修理を依頼／買取査定／そのまま使う）を保存する。選び直せる"""
     consultation = get_own_consultation_or_403(consultation_id)
     if consultation.status != ConsultationStatus.DONE:
         return redirect(
@@ -282,6 +294,9 @@ def choose(consultation_id: int):
         abort(422)
     consultation.choice = choice
     db.session.commit()
+    if choice == Choice.KEEP:
+        # 「ホームに戻る」。選択を保存して、トップへ移る
+        return redirect(url_for("main.index"))
     return redirect(url_for("consultations.show", consultation_id=consultation.id))
 
 
