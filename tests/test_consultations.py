@@ -41,7 +41,7 @@ def test_問診の入力の画面が出る(client, user, login):
     response = client.get("/consultations/new")
 
     assert response.status_code == 200
-    assert "問診を始める" in response.text
+    assert "AI 見積を始める" in response.text
     assert "アコースティックギター" in response.text
 
 
