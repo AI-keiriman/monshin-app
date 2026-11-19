@@ -165,3 +165,27 @@ def test_質問の指示の文に写しやすい例を置かない():
     # 例の文があると、AI がそのまま写す。形だけを示す
     assert "いつごろから出ていますか" not in ai.QUESTIONS_SYSTEM
     assert "そのまま写さない" in ai.QUESTIONS_SYSTEM
+
+
+# --- 原因を予想してから、質問を作る
+
+
+def test_質問の前に原因の予想を書かせる():
+    schema = ai.QUESTIONS_SCHEMA
+    # 予想（candidates）を、質問（questions）より先に書かせる
+    assert list(schema["properties"]) == ["candidates", "questions"]
+    assert schema["required"] == ["candidates", "questions"]
+    assert "可能性が高い順に" in ai.QUESTIONS_SYSTEM
+    assert "原因を1つに絞れる" in ai.QUESTIONS_SYSTEM
+
+
+def test_原因の予想は画面に出す質問に混ざらない(use_client):
+    message = questions_message(QUESTIONS)
+    # 本物の返事には、予想も入る。使うのは質問だけ
+    block = next(b for b in message.content if b.type == "text")
+    data = json.loads(block.text)
+    data["candidates"] = [{"cause": "ポットの故障", "how_to_tell": "回すと雑音が出る"}]
+    block.text = json.dumps(data, ensure_ascii=False)
+    use_client(message)
+
+    assert ai.generate_questions("エレキギター", "音が変わらない") == QUESTIONS

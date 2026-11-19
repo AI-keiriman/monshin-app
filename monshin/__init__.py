@@ -29,8 +29,10 @@ def create_app(config=None):
         # 返事の長さの上限。考える分（thinking）もここに数えられるので、余裕を持たせる
         AI_MAX_TOKENS_QUESTIONS=1024,
         AI_MAX_TOKENS_DIAGNOSIS=2048,
-        # 1回の呼び出しで待つ秒数と、やり直しの回数。合計で gunicorn の時間切れ（30秒）より短くする
-        AI_TIMEOUT_SECONDS=12.0,
+        # 1回の呼び出しで待つ秒数と、やり直しの回数。
+        # 質問の作成は、原因の予想も書くので10秒ほどかかることがある。
+        # 合計（20秒×2回）は、本番の gunicorn の時間切れ（120秒）より短い
+        AI_TIMEOUT_SECONDS=20.0,
         AI_MAX_RETRIES=1,
         # 1人が1日に始められる問診の数
         DAILY_CONSULTATION_LIMIT=5,
