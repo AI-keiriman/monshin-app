@@ -219,6 +219,23 @@ main.container {
   flex-direction: column;
   justify-content: center;
 }
+/* 背景の写真と、下の帯の写真が直接つながらないように、間に黒い余白を入れる（上の帯と同じ黒） */
+.body--photo .site-footer--photo {
+  position: relative;
+  box-sizing: content-box;
+  border-top: 3.5rem solid var(--monshin-ink);
+}
+/* 余白の上側は、線で切らずに、背景の写真から黒へなじませる */
+.body--photo .site-footer--photo::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 3.5rem);
+  height: 7rem;
+  background: linear-gradient(to bottom, rgba(10, 10, 10, 0), var(--monshin-ink));
+  pointer-events: none;
+}
 .auth-panel {
   --pico-color: #fcfcfc;
   --pico-primary: #e2c48d;
@@ -302,7 +319,7 @@ main.container {
   letter-spacing: 0.08em;
   padding: 2rem 1rem;
 }
-/* 下の帯の背景を、工房の写真にする（問診の入力の画面）。写真は、作るときに暗くしてある */
+/* 下の帯の背景を、工房の写真にする（全ページ）。写真は、作るときに暗くしてある */
 .site-footer--photo {
   /* 帯は細くし、写真は切らずに全体を見せる（高さに合わせて置き、左右は黒のまま） */
   /* 作業台の横長の写真（横4.5：縦1）を、帯の幅いっぱいに置く */
