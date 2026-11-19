@@ -75,9 +75,11 @@ def test_問診を作ると質問が3つ保存される(client, user, login, fak
     assert [q.position for q in consultation.questions] == [1, 2, 3]
     assert [q.question for q in consultation.questions] == fake_ai.questions
     # AI には、楽器の名前（日本語）と症状が渡る
-    assert fake_ai.question_calls == [
-        {"instrument_label": "ベース", "symptom": "トーンノブが効かない", "image": None}
-    ]
+    assert len(fake_ai.question_calls) == 1
+    call = fake_ai.question_calls[0]
+    assert call["instrument_label"] == "ベース"
+    assert call["symptom"] == "トーンノブが効かない"
+    assert call["image"] is None
 
 
 def test_未ログインでは問診を作れない(client, fake_ai):

@@ -114,6 +114,26 @@ class PriceRule(db.Model):
         return f"{yen(self.min_price)}〜{yen(self.max_price)}"
 
 
+class DiagnosisGuide(db.Model):
+    """診断の手引き。症状ごとに、確かめる点と見分け方を持つ。
+
+    工房の職人が中身を直していく表。AI は、近い行があれば、それに沿って質問と診断を作る。
+    """
+
+    __tablename__ = "diagnosis_guides"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    code: Mapped[str] = mapped_column(String(50), unique=True)
+    # 持ち主が書きそうな言葉で書いた症状
+    symptom: Mapped[str] = mapped_column(String(255))
+    # 考えられる原因、確かめる点、見分け方。「／」で区切って書く
+    causes: Mapped[str] = mapped_column(Text)
+    checks: Mapped[str] = mapped_column(Text)
+    how_to_tell: Mapped[str] = mapped_column(Text)
+    # 料金表（price_rules）の code
+    category_code: Mapped[str] = mapped_column(String(50))
+
+
 # メーカーと機種名の長さの上限、使用年数の上限
 INSTRUMENT_INFO_MAX_LENGTH = 50
 YEARS_USED_MAX = 100
