@@ -11,7 +11,7 @@
   {% endif %}
 </article>
 
-<p>原因を絞るために、次の質問に答えてください。</p>
+<p>故障の原因を絞り込むために、次の質問に答えてください。</p>
 
 <form method="post" action="{{ url_for('consultations.answers', consultation_id=consultation.id) }}" novalidate>
   {{ form.hidden_tag() }}
