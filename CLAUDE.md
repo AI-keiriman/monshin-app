@@ -19,6 +19,7 @@
 - 外部サービスに触るコードは `monshin/services/` に閉じ込める（ai.py = Claude API）。views からは services の関数だけを呼ぶ
 - AI のサービスは `create_app()` が `app.extensions["ai"]` に入れる。views は `current_app.extensions["ai"]` 経由で呼ぶ
 - 料金表の初期データは `monshin/commands.py` の `flask seed` で入れる
+- 診断の手引き（diagnosis_guides。症状ごとの確かめる点と見分け方）の初期データも、同じ `flask seed` で入れる。AI には、症状と一緒に全行を渡す
 - テストは `tests/`。共通の fixture は `tests/conftest.py`（app、client、ユーザー、ログイン、フェイク AI）。フェイクは `create_app({"AI_SERVICE": FakeAI()})` のように設定で渡す
 
 ## このプロジェクトの決まり

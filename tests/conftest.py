@@ -1,7 +1,7 @@
 import pytest
 
 from monshin import create_app
-from monshin.commands import seed_price_rules
+from monshin.commands import seed_diagnosis_guides, seed_price_rules
 from monshin.extensions import db
 from monshin.models import Consultation, ConsultationQuestion, User
 from monshin.services import ai
@@ -35,15 +35,22 @@ class FakeAI:
         )
         self.error = None  # 例外を入れておくと、それを投げる
 
-    def generate_questions(self, instrument_label, symptom, image=None):
+    def generate_questions(self, instrument_label, symptom, image=None, guides=None):
         self.question_calls.append(
-            {"instrument_label": instrument_label, "symptom": symptom, "image": image}
+            {
+                "instrument_label": instrument_label,
+                "symptom": symptom,
+                "image": image,
+                "guides": guides,
+            }
         )
         if self.error:
             raise self.error
         return list(self.questions)
 
-    def diagnose(self, instrument_label, symptom, answers, categories, image=None):
+    def diagnose(
+        self, instrument_label, symptom, answers, categories, image=None, guides=None
+    ):
         self.diagnose_calls.append(
             {
                 "instrument_label": instrument_label,
@@ -51,6 +58,7 @@ class FakeAI:
                 "answers": answers,
                 "categories": categories,
                 "image": image,
+                "guides": guides,
             }
         )
         if self.error:
@@ -89,6 +97,7 @@ def app(fake_ai, tmp_path):
         db.create_all()
         # 料金表は、本番でも最初に入れておくデータなので、テストでも入れておく
         seed_price_rules()
+        seed_diagnosis_guides()
         yield app
         db.session.remove()
 

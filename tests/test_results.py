@@ -2,6 +2,7 @@ import io
 
 import pytest
 
+from monshin.commands import DIAGNOSIS_GUIDES, PRICE_RULES
 from monshin.extensions import db
 from monshin.models import (
     Consultation,
@@ -57,12 +58,12 @@ def test_AIには症状と答えと料金表の分類が渡る(
     assert call["instrument_label"] == "ベース"
     assert call["symptom"] == "トーンノブが効かない"
     assert call["answers"] == list(zip(fake_ai.questions, ANSWERS.values()))
+    # 料金表の全部の分類が、入れた順に渡る
     assert [code for code, _, _ in call["categories"]] == [
-        "pot",
-        "fret",
-        "neck_crack",
-        "other",
+        row[0] for row in PRICE_RULES
     ]
+    # 診断の手引きも渡る
+    assert len(call["guides"]) == len(DIAGNOSIS_GUIDES)
     assert call["image"] is None
 
 

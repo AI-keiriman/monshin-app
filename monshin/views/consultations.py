@@ -24,19 +24,31 @@ from monshin.models import (
     ConsultationCause,
     ConsultationQuestion,
     ConsultationStatus,
+    DiagnosisGuide,
     Instrument,
     PriceRule,
     instrument_info_text,
     now_jst,
     symptom_with_info,
 )
-from monshin.services.ai import AIError
+from monshin.services.ai import AIError, GuideEntry
 from monshin.uploads import detect_media_type, save_image, upload_folder
 
 bp = Blueprint("consultations", __name__, url_prefix="/consultations")
 logger = logging.getLogger(__name__)
 
 AI_UNAVAILABLE = "今は AI を使えません。時間をおいて、もう一度お試しください。"
+
+
+def load_guides() -> list[GuideEntry]:
+    """診断の手引きを読む。AI に、症状と一緒に渡す"""
+    rows = db.session.scalars(
+        db.select(DiagnosisGuide).order_by(DiagnosisGuide.id)
+    ).all()
+    return [
+        GuideEntry(r.symptom, r.causes, r.checks, r.how_to_tell, r.category_code)
+        for r in rows
+    ]
 
 
 def get_own_consultation_or_403(consultation_id: int) -> Consultation:
@@ -162,6 +174,7 @@ def create():
             INSTRUMENT_LABELS[instrument],
             symptom_with_info(form.symptom.data, info),
             image,
+            guides=load_guides(),
         )
     except AIError:
         # 5. 失敗したら、何も保存しない。入力した文は、フォームに残る
@@ -233,6 +246,7 @@ def answers(consultation_id: int):
             [(q.question, q.answer) for q in consultation.questions],
             [(r.code, r.label, r.symptom_example) for r in rules],
             load_image(consultation),
+            guides=load_guides(),
         )
     except AIError:
         # 6. 失敗しても、答えは保存したまま。もう一度送ると、やり直せる
