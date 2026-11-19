@@ -3,10 +3,10 @@
 {% block footer_class %}site-footer--photo{% endblock %}
 {% block content %}
 <h1>問診を始める</h1>
-<p>楽器の症状を教えてください。AI が、原因を絞るための質問をします。</p>
+<p>楽器の症状を教えてください。<br>AI が、原因を絞るための質問をします。</p>
 
 {% if limit_reached %}
-  <article>今日の問診の回数が、上限（1日{{ limit }}回）に達しました。明日、もう一度お試しください。</article>
+  <article>今日の問診の回数が、上限（1日{{ limit }}回）に達しました。<br>明日、もう一度お試しください。</article>
 {% endif %}
 
 <form method="post" action="{{ url_for('consultations.create') }}" enctype="multipart/form-data" novalidate>

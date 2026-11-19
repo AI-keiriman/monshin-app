@@ -36,7 +36,7 @@
   {% block hero %}{% endblock %}
   <main class="container">
     {% for message in get_flashed_messages() %}
-      <article>{{ message }}</article>
+      <article>{{ message|br_sentences }}</article>
     {% endfor %}
     {% block content %}{% endblock %}
   </main>

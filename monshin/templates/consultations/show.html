@@ -20,7 +20,7 @@
 <h2>考えられる原因</h2>
 <ol>
   {% for cause in consultation.causes %}
-    <li><strong>{{ cause.name }}</strong><br>{{ cause.description }}</li>
+    <li><strong>{{ cause.name }}</strong><br>{{ cause.description|br_sentences }}</li>
   {% endfor %}
 </ol>
 
@@ -47,12 +47,12 @@
 {% if consultation.choice == "repair" %}
   <article>
     <header><strong>修理の依頼</strong></header>
-    <p>この問診の内容（症状、質問への答え、写真）を、工房に送ります。工房が楽器の状態を確かめて、正式な見積と納期をお知らせします。</p>
+    <p>この問診の内容（症状、質問への答え、写真）を、工房に送ります。<br>工房が楽器の状態を確かめて、正式な見積と納期をお知らせします。</p>
   </article>
 {% elif consultation.choice == "sell" %}
   <article>
     <header><strong>買取査定</strong></header>
-    <p>楽器の種類と状態、この問診の結果をもとに、買い取りの目安をお出しします。修理の見積と見比べて、直すか手放すかを決められます。</p>
+    <p>楽器の種類と状態、この問診の結果をもとに、買い取りの目安をお出しします。<br>修理の見積と見比べて、直すか手放すかを決められます。</p>
   </article>
 {% endif %}
 

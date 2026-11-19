@@ -1,13 +1,18 @@
 import logging
 import os
+import re
 import secrets
 from pathlib import Path
 
 from flask import Flask, render_template
+from markupsafe import Markup, escape
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from monshin.extensions import csrf, db, login_manager, migrate
 from monshin.services import ai
+
+# 「。」の後に文が続くところ。文の終わりと、かっこの中の終わりは除く
+SENTENCE_BREAK = re.compile(r"。(?=[^）」\s])")
 
 
 def create_app(config=None):
@@ -82,6 +87,11 @@ def create_app(config=None):
     @app.context_processor
     def inject_asset_version():
         return {"asset_version": asset_version}
+
+    @app.template_filter("br_sentences")
+    def br_sentences(value) -> Markup:
+        """「。」の後に文が続くところで改行する。先にエスケープしてから <br> を足す"""
+        return Markup(SENTENCE_BREAK.sub("。<br>", str(escape(value))))
 
     @app.template_filter("jp_datetime")
     def jp_datetime(value) -> str:
