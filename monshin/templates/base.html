@@ -7,14 +7,14 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mrs+Saint+Delafield&family=Shippori+Mincho:wght@400;500;700&display=swap">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css', v=asset_version) }}">
   {% block head %}{% endblock %}
 </head>
 <body>
   <header class="site-header">
     <nav class="container">
-      <ul><li><a class="brand" href="{{ url_for('main.index') }}">ギター修理の AI 見積</a></li></ul>
+      <ul><li><a class="brand title-mark" href="{{ url_for('main.index') }}">ギター修理の AI 見積</a></li></ul>
       <ul>
         {% if current_user.is_authenticated %}
           <li><a href="{{ url_for('consultations.index') }}">問診の一覧</a></li>
@@ -40,7 +40,7 @@
     {% endfor %}
     {% block content %}{% endblock %}
   </main>
-  <footer class="site-footer {% block footer_class %}{% endblock %}">ギター修理の AI 見積</footer>
+  <footer class="site-footer {% block footer_class %}{% endblock %}"><span class="title-mark">ギター修理の AI 見積</span></footer>
   <script>
     // AI を呼ぶフォームの送信のボタン（data-once）を、2回押せないようにする
     document.addEventListener("submit", (event) => {
@@ -50,6 +50,33 @@
         button.setAttribute("aria-busy", "true");
       }
     });
+    // 画面に入った要素を、下から上げながら出す。クラスは JavaScript が付けるので、
+    // JavaScript が動かないブラウザーでは、最初から全部が見える
+    if ("IntersectionObserver" in window) {
+      const show = (element) => {
+        element.classList.add("is-visible");
+        observer.unobserve(element);
+      };
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) show(entry.target);
+        });
+        // 一気にスクロールして飛び越えた要素（画面より上にある要素）も、出しておく
+        document.querySelectorAll(".reveal:not(.is-visible)").forEach((element) => {
+          if (element.getBoundingClientRect().bottom < 0) show(element);
+        });
+      }, { threshold: 0.1, rootMargin: "0px 0px -8% 0px" });
+      const targets = document.querySelectorAll(".hero > div, main.container > *:not(.steps), .steps > div");
+      targets.forEach((element) => {
+        if (element.parentElement.classList.contains("steps")) {
+          // 「使い方」の3つは、左から順に少しずつ遅らせる
+          const order = Array.from(element.parentElement.children).indexOf(element);
+          element.style.transitionDelay = `${order * 0.15}s`;
+        }
+        element.classList.add("reveal");
+        observer.observe(element);
+      });
+    }
     // ブラウザーの「戻る」で戻ったときは、もう一度押せるようにする
     window.addEventListener("pageshow", () => {
       document.querySelectorAll("button[data-once]").forEach((button) => {
