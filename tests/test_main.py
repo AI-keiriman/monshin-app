@@ -46,3 +46,11 @@ def test_500_page_is_shown_in_japanese(app):
 
     assert response.status_code == 500
     assert "エラーが起きました" in response.text
+
+
+def test_theme_css_url_has_a_version(client):
+    """CSS を変えたときに、ブラウザーが古い写しを使い続けないようにする"""
+    text = client.get("/").get_data(as_text=True)
+
+    assert "css/theme.css?v=" in text
+    assert "css/theme.css?v=0" not in text
