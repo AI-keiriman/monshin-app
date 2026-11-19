@@ -1,8 +1,34 @@
 {% extends "base.html" %}
 
+{% block hero %}
+<section class="hero">
+  <div>
+    <h1>ギター修理の AI 見積</h1>
+    <p>修理に出す前に、料金がわかる。</p>
+    <a role="button" href="{{ url_for('consultations.new') }}">問診を始める</a>
+  </div>
+</section>
+{% endblock %}
+
 {% block content %}
-  <h1>ギター修理の AI 見積</h1>
-  <p>修理に出す前に、料金がわかるアプリです。</p>
-  <p>ギターやベースの症状を入力すると、AI が質問をします。答えると、考えられる原因と料金の見積が出ます。</p>
-  <a role="button" href="{{ url_for('consultations.new') }}">問診を始める</a>
+  <h2>使い方</h2>
+  <p class="lead">ギターやベースの症状を入力すると、AI が質問をします。答えると、考えられる原因と料金の見積が出ます。</p>
+  <div class="steps">
+    <div>
+      <img src="{{ url_for('static', filename='img/step-1.jpg') }}" alt="アコースティックギターのボディ" width="480" height="480">
+      <h3>一、症状を送る</h3>
+      <p>気になる症状を、文で書きます。写真も付けられます。</p>
+    </div>
+    <div>
+      <img src="{{ url_for('static', filename='img/step-2.jpg') }}" alt="ギターを弾く手元" width="480" height="480">
+      <h3>二、質問に答える</h3>
+      <p>AI が、原因を絞るための質問をします。</p>
+    </div>
+    <div>
+      <img src="{{ url_for('static', filename='img/step-3.jpg') }}" alt="エレキギターのボディ" width="480" height="480">
+      <h3>三、見積を見る</h3>
+      <p>考えられる原因と、料金の見積が出ます。</p>
+    </div>
+  </div>
+  <p class="center"><a role="button" href="{{ url_for('consultations.new') }}">問診を始める</a></p>
 {% endblock %}
