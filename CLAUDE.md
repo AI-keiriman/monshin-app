@@ -43,7 +43,8 @@
 - AI を呼ぶのは、1回の問診につき2回だけ（質問を作る、結果を作る）。会話を何往復もさせない
 - `max_tokens` は小さめにする（質問は 1024、結果は 2048。設定 `AI_MAX_TOKENS_QUESTIONS`、`AI_MAX_TOKENS_DIAGNOSIS`）。Claude Haiku 5.5 は、考える分（thinking）も `max_tokens` に数える。小さすぎると、返事が出る前に切れる。変えるときは、理由を説明してから変える
 - `output_config` の `effort` は `low` にする（考える量と費用を抑える）。返事の形は `output_config.format`（JSON スキーマ）で決める
-- 1回の呼び出しで待つ時間は12秒、やり直しは1回まで（設定 `AI_TIMEOUT_SECONDS`、`AI_MAX_RETRIES`）。合計を、gunicorn の時間切れ（30秒）より短くする
+- 1回の呼び出しで待つ時間は20秒、やり直しは1回まで（設定 `AI_TIMEOUT_SECONDS`、`AI_MAX_RETRIES`）。合計（40秒）を、本番の gunicorn の時間切れ（120秒）より短くする
+- 質問を作るときは、先に原因の予想を3つ書かせる（`candidates`。画面には出さない）。その予想を見分ける質問を作らせる
 - AI を使えるのは、ログインした人だけ。問診は1人1日5回まで（設定 `DAILY_CONSULTATION_LIMIT`、既定 5）
 - 失敗は `AIError` にして、画面に「今は AI を使えません」と短く出す。画面を落とさない
 - AI の返事は、決めた形（質問3つ。原因の候補と分類のコード）になっているかを確かめる。形が違えば `AIError` にする。分類のコードが料金表に無ければ `other` にする
