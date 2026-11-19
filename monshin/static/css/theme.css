@@ -207,28 +207,39 @@ main.container {
   font-size: 0.95rem;
   margin: 0;
 }
-/* ログインと会員登録：左に縦長の写真、右に入力欄 */
-.split {
-  display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  gap: 3.5rem;
-  align-items: center;
+/* ログインと会員登録：工房の写真を暗くして、画面いっぱいの背景にする。入力欄は中央に置く */
+.body--photo {
+  background:
+    linear-gradient(rgba(10, 10, 10, 0.7), rgba(10, 10, 10, 0.7)),
+    url("../img/workshop-body.jpg") center 24% / cover no-repeat;
 }
-.split img {
-  display: block;
+.body--photo main.container {
+  min-height: 72vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.auth-panel {
+  --pico-color: #fcfcfc;
+  --pico-primary: #e2c48d;
+  --pico-primary-hover: #ffffff;
+  --pico-primary-underline: rgba(226, 196, 141, 0.5);
+  --pico-primary-hover-underline: #ffffff;
   width: 100%;
-  height: auto;
-  max-height: 36rem;
-  object-fit: cover;
+  max-width: 30rem;
+  margin: 0 auto;
+  color: #fcfcfc;
 }
-@media (max-width: 640px) {
-  .split {
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-  }
-  .split img {
-    max-height: 13rem;
-  }
+.auth-panel h1 {
+  color: #e2c48d;
+  text-align: center;
+}
+.auth-panel label {
+  color: #fcfcfc;
+}
+/* 入力の誤りの文。暗い背景でも読める明るさにする */
+.auth-panel small {
+  color: #ffc2b5;
 }
 .lead {
   text-align: center;

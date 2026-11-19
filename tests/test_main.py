@@ -7,7 +7,7 @@ def test_top_page_returns_200(client):
     response = client.get("/")
 
     assert response.status_code == 200
-    assert "問診を始める" in response.get_data(as_text=True)
+    assert "AI 見積を始める" in response.get_data(as_text=True)
 
 
 def test_app_refuses_to_start_without_secret_key(monkeypatch):

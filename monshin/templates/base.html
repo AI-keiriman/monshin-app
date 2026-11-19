@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css', v=asset_version) }}">
   {% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% block body_class %}{% endblock %}">
   <header class="site-header">
     <nav class="container">
       <ul><li><a class="brand title-mark" href="{{ url_for('main.index') }}">ギター修理の AI 見積</a></li></ul>

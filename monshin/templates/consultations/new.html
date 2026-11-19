@@ -2,7 +2,7 @@
 {% from "_form_errors.html" import field %}
 {% block footer_class %}site-footer--photo{% endblock %}
 {% block content %}
-<h1>問診を始める</h1>
+<h1>AI 見積を始める</h1>
 <p>楽器の症状を教えてください。<br>AI が、原因を絞るための質問をします。</p>
 
 {% if limit_reached %}
@@ -44,6 +44,6 @@
     {# 今は、欄だけ。name を付けていないので、選んだファイルはサーバーに送られない #}
     <input type="file" accept="audio/*,video/*">
   </label>
-  <button type="submit" {% if limit_reached %}disabled{% else %}data-once{% endif %}>問診を始める</button>
+  <button type="submit" {% if limit_reached %}disabled{% else %}data-once{% endif %}>AI 見積を始める</button>
 </form>
 {% endblock %}
