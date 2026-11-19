@@ -571,7 +571,7 @@ def test_使用年数が0年でも保存される(client, user, login, fake_ai):
 def test_使用年数が数字でないときは問診を作らない(client, user, login, fake_ai):
     login(user)
 
-    for value in ("十年", "-1", "101", "1.5"):
+    for value in ("十年", "-1", "101", "1.5", "0100", "1" * 5000):
         response = post_consultation(client, years_used=value)
         assert response.status_code == 422
         assert "0〜100 の数字で入力してください" in response.text
