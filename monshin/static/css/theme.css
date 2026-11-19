@@ -1,0 +1,221 @@
+/* デザインの決まりは CLAUDE.md の「デザイン」にある。色とフォントは、ここの変数で変える */
+
+/* 全体に効く設定 */
+:root {
+  --pico-font-family: "Shippori Mincho", "Yu Mincho", "YuMincho", "Hiragino Mincho ProN", serif;
+  --pico-border-radius: 0;
+  --pico-box-shadow: none;
+  --pico-card-box-shadow: none;
+  --pico-line-height: 1.9;
+  --pico-typography-spacing-vertical: 1.5rem;
+
+  --monshin-ink: #0a0a0a; /* 文字と、黒い帯 */
+  --monshin-paper: #ffffff; /* 背景 */
+  --monshin-brown: #702c00; /* ボタンとリンク */
+  --monshin-brown-dark: #561f00;
+  --monshin-amber: #8a5f17; /* 見出し */
+}
+
+/* 明るい配色の色（base.html で data-theme="light" に固定している） */
+[data-theme="light"],
+:root:not([data-theme="dark"]) {
+  --pico-background-color: var(--monshin-paper);
+  --pico-color: var(--monshin-ink);
+  --pico-h1-color: var(--monshin-amber);
+  --pico-h2-color: var(--monshin-amber);
+  --pico-h3-color: var(--monshin-ink);
+  --pico-muted-color: #555555;
+  --pico-muted-border-color: #d9d4cc;
+  --pico-card-background-color: #ffffff;
+  --pico-card-border-color: #d9d4cc;
+  --pico-card-sectioning-background-color: #f6f3ee;
+  --pico-form-element-border-color: #8c8478;
+  --pico-form-element-focus-color: var(--monshin-brown);
+  --pico-primary: var(--monshin-brown);
+  --pico-primary-background: var(--monshin-brown);
+  --pico-primary-border: var(--monshin-brown);
+  --pico-primary-underline: rgba(112, 44, 0, 0.5);
+  --pico-primary-hover: var(--monshin-brown-dark);
+  --pico-primary-hover-background: var(--monshin-brown-dark);
+  --pico-primary-hover-border: var(--monshin-brown-dark);
+  --pico-primary-focus: rgba(112, 44, 0, 0.35);
+  --pico-primary-inverse: #ffffff;
+}
+
+/* 見出し：中央にそろえ、字の間を少し広げる */
+h1,
+h2 {
+  text-align: center;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+}
+h1 {
+  margin-top: 1rem;
+  margin-bottom: 2.5rem;
+}
+h2 {
+  margin-top: 3.5rem;
+}
+
+/* カード：影を付けず、細い線で囲む */
+article {
+  border: 1px solid var(--pico-card-border-color);
+  box-shadow: none;
+}
+
+/* 入力の画面：横に広がりすぎないように、幅をしぼって中央に置く */
+main.container > form,
+main.container > form + p {
+  max-width: 40rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 一覧の表：症状の列だけを折り返す */
+th,
+td:not(:nth-child(3)) {
+  white-space: nowrap;
+}
+
+/* 上の黒い帯 */
+.site-header {
+  background: var(--monshin-ink);
+}
+.site-header nav {
+  --pico-color: #fcfcfc;
+  --pico-primary: #fcfcfc;
+  --pico-primary-hover: #d9b77a;
+  --pico-primary-underline: transparent;
+  --pico-primary-hover-underline: transparent;
+  color: #fcfcfc;
+}
+.site-header .brand {
+  font-size: 1.15rem;
+  letter-spacing: 0.1em;
+}
+.site-header button {
+  color: #fcfcfc;
+  border-color: #8c8478;
+  background: transparent;
+  margin: 0;
+  padding: 0.35rem 0.9rem;
+}
+
+main.container {
+  padding-top: 3rem;
+  padding-bottom: 5rem;
+}
+
+/* トップの大きい写真。写真は、作るときに暗くしてある（CSS では重ねない） */
+.hero {
+  background: var(--monshin-ink) url("../img/hero.jpg") center / cover no-repeat;
+  color: #ffffff;
+  min-height: 68vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 1.5rem;
+}
+.hero h1 {
+  color: #ffffff;
+  font-size: clamp(1.8rem, 4.5vw, 3rem);
+  letter-spacing: 0.14em;
+  margin: 0 0 1.5rem;
+}
+.hero p {
+  color: #ffffff;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  margin-bottom: 2.5rem;
+}
+.hero [role="button"] {
+  padding: 0.9rem 2.6rem;
+  letter-spacing: 0.12em;
+}
+
+/* 使い方の3つ。写真は丸く切り抜く */
+.steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 3rem 2rem;
+  margin: 3rem 0;
+  text-align: center;
+}
+.steps img {
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 1.25rem;
+}
+.steps h3 {
+  font-size: 1.1rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.5rem;
+}
+.steps p {
+  font-size: 0.95rem;
+  margin: 0;
+}
+.lead {
+  text-align: center;
+  max-width: 38rem;
+  margin: 0 auto 1rem;
+}
+.center {
+  text-align: center;
+}
+
+/* スマートフォンの幅：上の帯を2段にし、文字が1字ずつ折れないようにする */
+.site-header a,
+.site-header button {
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .site-header nav {
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+  .site-header nav ul {
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .site-header nav li {
+    padding-top: 0.35rem;
+    padding-bottom: 0.35rem;
+    font-size: 0.9rem;
+    overflow-wrap: anywhere;
+  }
+  .hero {
+    min-height: 60vh;
+  }
+  .hero h1 {
+    font-size: 1.45rem;
+    letter-spacing: 0.06em;
+  }
+  h1,
+  h2 {
+    letter-spacing: 0.04em;
+  }
+  /* 一覧の表は、横に動かして見られるようにする */
+  table {
+    display: block;
+    overflow-x: auto;
+  }
+  td:nth-child(3) {
+    min-width: 12rem;
+  }
+}
+
+/* 下の黒い帯 */
+.site-footer {
+  background: var(--monshin-ink);
+  color: #c9c4bb;
+  text-align: center;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  padding: 2rem 1rem;
+}

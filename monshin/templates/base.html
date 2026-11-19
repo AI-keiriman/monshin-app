@@ -1,16 +1,20 @@
 <!doctype html>
-<html lang="ja">
+<html lang="ja" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}ギター修理の AI 見積{% endblock %}</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;700&display=swap">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/theme.css') }}">
   {% block head %}{% endblock %}
 </head>
 <body>
-  <header class="container">
-    <nav>
-      <ul><li><a href="{{ url_for('main.index') }}"><strong>ギター修理の AI 見積</strong></a></li></ul>
+  <header class="site-header">
+    <nav class="container">
+      <ul><li><a class="brand" href="{{ url_for('main.index') }}">ギター修理の AI 見積</a></li></ul>
       <ul>
         {% if current_user.is_authenticated %}
           <li><a href="{{ url_for('consultations.index') }}">問診の一覧</a></li>
@@ -28,12 +32,14 @@
       </ul>
     </nav>
   </header>
+  {% block hero %}{% endblock %}
   <main class="container">
     {% for message in get_flashed_messages() %}
       <article>{{ message }}</article>
     {% endfor %}
     {% block content %}{% endblock %}
   </main>
+  <footer class="site-footer">ギター修理の AI 見積　／　写真：Unsplash</footer>
   <script>
     // AI を呼ぶフォームの送信のボタン（data-once）を、2回押せないようにする
     document.addEventListener("submit", (event) => {
