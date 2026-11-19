@@ -39,7 +39,7 @@
     {% endfor %}
     {% block content %}{% endblock %}
   </main>
-  <footer class="site-footer">ギター修理の AI 見積　／　写真：Unsplash</footer>
+  <footer class="site-footer {% block footer_class %}{% endblock %}">ギター修理の AI 見積</footer>
   <script>
     // AI を呼ぶフォームの送信のボタン（data-once）を、2回押せないようにする
     document.addEventListener("submit", (event) => {
