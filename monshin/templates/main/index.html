@@ -12,22 +12,22 @@
 
 {% block content %}
   <h2>使い方</h2>
-  <p class="lead">ギターやベースの症状を入力すると、AI が質問をします。<br>答えると、考えられる原因と料金の見積が出ます。</p>
+  <p class="lead">ギターやベースの症状を入力すると、AI が質問をします。<br>答えると、考えられる故障の原因と、料金の見積が出ます。</p>
   <div class="steps">
     <div>
       <img src="{{ url_for('static', filename='img/step-1.jpg') }}" alt="アコースティックギターのボディ" width="480" height="480">
       <h3>①症状を送る</h3>
-      <p>気になる症状を、文で書きます。<br>写真も付けられます。</p>
+      <p>気になる症状を、入力します。<br>必要に応じて、写真、音声、動画データも添付できます。</p>
     </div>
     <div>
       <img src="{{ url_for('static', filename='img/step-2.jpg') }}" alt="ギターを弾く手元" width="480" height="480">
       <h3>②質問に答える</h3>
-      <p>AI が、原因を絞るための質問をします。</p>
+      <p>入力した内容をもとに、AI が故障の原因を絞り込むための質問をします。</p>
     </div>
     <div>
       <img src="{{ url_for('static', filename='img/step-3.jpg') }}" alt="エレキギターのボディ" width="480" height="480">
       <h3>③見積を見る</h3>
-      <p>考えられる原因と、料金の見積が出ます。</p>
+      <p>考えられる故障の原因と、<br>見込まれる修理、その料金の見積が出ます。</p>
     </div>
   </div>
   <p class="center"><a role="button" href="{{ url_for('consultations.new') }}">AI 見積を始める</a></p>
