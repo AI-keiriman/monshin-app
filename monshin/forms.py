@@ -132,7 +132,12 @@ class ConsultationForm(FlaskForm):
     def validate_years_used(self, field):
         if not field.data:
             return
-        if not field.data.isdecimal() or int(field.data) > YEARS_USED_MAX:
+        # 桁数を先に確かめる。とても長い数字を int() に渡すと ValueError になり、500 になるため
+        if (
+            len(field.data) > len(str(YEARS_USED_MAX))
+            or not field.data.isdecimal()
+            or int(field.data) > YEARS_USED_MAX
+        ):
             raise ValidationError(
                 f"使用年数は、0〜{YEARS_USED_MAX} の数字で入力してください"
             )

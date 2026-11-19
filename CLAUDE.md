@@ -30,6 +30,7 @@
 - 値を変える操作は、すべて POST にする
 - 料金の金額は、**サーバー側で料金表（price_rules）から引く**。AI が返した金額や、フォームから来た金額は使わない
 - テンプレートで `|safe` と `Markup()` を使わない。AI が作った文章も、自動エスケープのまま表示する
+  - 例外：`monshin/__init__.py` のフィルター `br_sentences` だけは `Markup()` を使う。先に全体をエスケープしてから `<br>` を足すので、XSS にならない。`tests/test_sentence_breaks.py` で確かめている。ほかの場所では使わない
 - SQL を文字列で組み立てない。SQLAlchemy の `select()` を使う
 - SQLite でしか動かない書き方（SQLite 専用の SQL や関数。`strftime`、`PRAGMA` など）を使わない。本番の MySQL でも動く SQLAlchemy の書き方にする（文字列のカラムは `String(50)` のように長さを付ける）
 - アップロードされた写真は、拡張子と中身（JPEG/PNG/WebP）とサイズ（5MB 以下）を確かめ、ファイル名はサーバーで付け直す
