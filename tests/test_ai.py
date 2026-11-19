@@ -140,3 +140,28 @@ def test_APIの失敗はAIErrorにする(use_client):
 
     with pytest.raises(ai.AIError):
         ai.generate_questions("ベース", "音が出ない")
+
+
+# --- API キーが無いとき
+
+# autouse の no_real_ai が差し替える前の、本物の _client
+REAL_CLIENT = ai._client
+
+
+@pytest.mark.parametrize("value", [None, ""])
+def test_APIキーが無いときはAIErrorにする(app, monkeypatch, value):
+    monkeypatch.setattr(ai, "_client", REAL_CLIENT)
+    if value is None:
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    else:
+        monkeypatch.setenv("ANTHROPIC_API_KEY", value)
+
+    # キーが無ければ、クライアントを作る前に止まる（外へは接続しない）
+    with pytest.raises(ai.AIError):
+        ai.generate_questions("エレキベース", "音が出ない")
+
+
+def test_質問の指示の文に写しやすい例を置かない():
+    # 例の文があると、AI がそのまま写す。形だけを示す
+    assert "いつごろから出ていますか" not in ai.QUESTIONS_SYSTEM
+    assert "そのまま写さない" in ai.QUESTIONS_SYSTEM

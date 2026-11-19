@@ -95,7 +95,7 @@ class PriceRule(db.Model):
     def price_text(self) -> str:
         """料金の見積の表示。下限と上限、下限だけ、どちらも無い、の3通り"""
         if self.min_price is None:
-            return "要見積もり"
+            return "要見積"
         if self.max_price is None:
             return f"{yen(self.min_price)}〜"
         return f"{yen(self.min_price)}〜{yen(self.max_price)}"
