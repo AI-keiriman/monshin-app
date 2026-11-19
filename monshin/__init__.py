@@ -1,6 +1,7 @@
 import logging
 import os
 import secrets
+from pathlib import Path
 
 from flask import Flask, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -70,6 +71,15 @@ def create_app(config=None):
     from monshin import commands
 
     commands.init_app(app)
+
+    # nginx は static のファイルを、ブラウザーに7日間おぼえさせる。
+    # CSS を変えたのに古い見た目のままにならないように、URL に版の番号（ファイルの更新時刻）を付ける
+    theme_css = Path(app.static_folder) / "css" / "theme.css"
+    asset_version = int(theme_css.stat().st_mtime) if theme_css.exists() else 0
+
+    @app.context_processor
+    def inject_asset_version():
+        return {"asset_version": asset_version}
 
     @app.template_filter("jp_datetime")
     def jp_datetime(value) -> str:
