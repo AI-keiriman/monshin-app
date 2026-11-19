@@ -26,6 +26,9 @@ erDiagram
         string instrument "acoustic / electric / bass"
         text symptom "症状の文"
         string image_filename "nullable"
+        string maker "nullable"
+        string model_name "nullable"
+        int years_used "nullable"
         string status "asking / done"
         int price_rule_id FK "nullable。結果ができたときに入る"
         string choice "nullable。repair / sell / keep"
@@ -81,9 +84,12 @@ erDiagram
 | instrument | String(20) | not null | `acoustic` / `electric` / `bass`（Python 側は `Instrument` の StrEnum） |
 | symptom | Text | not null | 症状の文。1,000文字まで（フォームで確かめる） |
 | image_filename | String(255) | nullable | サーバーが付け直したファイル名。写真が無ければ空 |
+| maker | String(50) | nullable | メーカー（任意）。AI に、症状と一緒に渡す |
+| model_name | String(50) | nullable | 機種名（任意）。AI に、症状と一緒に渡す |
+| years_used | Integer | nullable | 使用年数（任意）。0〜100（フォームで確かめる）。AI に、症状と一緒に渡す |
 | status | String(20) | not null, default `asking` | `asking`（質問に答える前） / `done`（結果あり）。Python 側は `ConsultationStatus` の StrEnum |
 | price_rule_id | Integer | nullable, FK price_rules.id | AI が選んだ料金表の分類。`done` になるときに入る |
-| choice | String(20) | nullable | `repair`（直す） / `sell`（手放す） / `keep`（そのまま使う）。Python 側は `Choice` の StrEnum |
+| choice | String(20) | nullable | `repair`（修理を依頼） / `sell`（買取査定） / `keep`（そのまま使う。ボタンは「ホームに戻る」）。Python 側は `Choice` の StrEnum |
 | created_at | DateTime | not null, default 現在時刻（日本時間） | 問診を始めた日時。今日の回数を数えるのに使う |
 | completed_at | DateTime | nullable | 結果ができた日時 |
 

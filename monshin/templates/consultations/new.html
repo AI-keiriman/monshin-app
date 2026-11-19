@@ -16,6 +16,19 @@
     {% for choice in form.instrument %}<label>{{ choice() }} {{ choice.label.text }}</label>{% endfor %}
     {% for e in form.instrument.errors %}<small>{{ e }}</small>{% endfor %}
   </fieldset>
+  <div class="grid">
+    {{ field(form.maker) }}
+    {{ field(form.model_name) }}
+    <label>
+      {{ form.years_used.label.text }}
+      {% if form.years_used.errors %}
+        {{ form.years_used(type="number", min="0", max="100", inputmode="numeric", aria_invalid="true") }}
+      {% else %}
+        {{ form.years_used(type="number", min="0", max="100", inputmode="numeric") }}
+      {% endif %}
+      {% for e in form.years_used.errors %}<small>{{ e }}</small>{% endfor %}
+    </label>
+  </div>
   <label>
     {{ form.symptom.label.text }}
     {% if form.symptom.errors %}
@@ -27,9 +40,9 @@
   </label>
   {{ field(form.image) }}
   <label>
-    音声を追加（準備中）
-    <input type="file" disabled aria-describedby="audio-note">
-    <small id="audio-note">音声のアップロードは、準備中です。</small>
+    音声・動画を追加（任意）
+    {# 今は、欄だけ。name を付けていないので、選んだファイルはサーバーに送られない #}
+    <input type="file" accept="audio/*,video/*">
   </label>
   <button type="submit" {% if limit_reached %}disabled{% else %}data-once{% endif %}>問診を始める</button>
 </form>

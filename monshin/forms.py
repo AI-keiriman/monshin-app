@@ -1,9 +1,21 @@
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileField, FileSize
 from wtforms import EmailField, PasswordField, RadioField, StringField, TextAreaField
-from wtforms.validators import DataRequired, Length, Regexp
+from wtforms.validators import (
+    DataRequired,
+    Length,
+    Optional,
+    Regexp,
+    ValidationError,
+)
 
-from monshin.models import INSTRUMENT_LABELS, NAME_MAX_LENGTH, Instrument
+from monshin.models import (
+    INSTRUMENT_INFO_MAX_LENGTH,
+    INSTRUMENT_LABELS,
+    NAME_MAX_LENGTH,
+    YEARS_USED_MAX,
+    Instrument,
+)
 
 # email-validator パッケージを足さずに済むよう、形だけを正規表現で確かめる
 EMAIL = Regexp(
@@ -72,7 +84,7 @@ class LoginForm(FlaskForm):
 
 
 class ConsultationForm(FlaskForm):
-    """問診の入力。音声の欄は「準備中」の表示だけなので、フォームには入れない"""
+    """問診の入力。音声・動画の欄は表示だけ（送らない）なので、フォームには入れない"""
 
     instrument = RadioField(
         "楽器の種類",
@@ -91,6 +103,40 @@ class ConsultationForm(FlaskForm):
             ),
         ],
     )
+    # 楽器の情報。どれも任意。空のままでも、問診を始められる
+    maker = StringField(
+        "メーカー（任意）",
+        filters=[strip],
+        validators=[
+            Optional(),
+            Length(
+                max=INSTRUMENT_INFO_MAX_LENGTH,
+                message=f"メーカーは{INSTRUMENT_INFO_MAX_LENGTH}文字以内で入力してください",
+            ),
+        ],
+    )
+    model_name = StringField(
+        "機種名（任意）",
+        filters=[strip],
+        validators=[
+            Optional(),
+            Length(
+                max=INSTRUMENT_INFO_MAX_LENGTH,
+                message=f"機種名は{INSTRUMENT_INFO_MAX_LENGTH}文字以内で入力してください",
+            ),
+        ],
+    )
+    # 数字だけを受け付ける。エラーの文を日本語で出すために、文字として受けて自分で確かめる
+    years_used = StringField("使用年数（任意、年）", filters=[strip])
+
+    def validate_years_used(self, field):
+        if not field.data:
+            return
+        if not field.data.isdecimal() or int(field.data) > YEARS_USED_MAX:
+            raise ValidationError(
+                f"使用年数は、0〜{YEARS_USED_MAX} の数字で入力してください"
+            )
+
     # 拡張子と大きさはここで確かめる。中身が本当に画像かは、ビューで uploads.detect_media_type() が確かめる
     image = FileField(
         "写真（任意。JPEG・PNG・WebP、5MB まで）",

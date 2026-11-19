@@ -4,6 +4,7 @@
 
 <article>
   <header><strong>{{ consultation.instrument_label }}</strong></header>
+  {% if consultation.instrument_info %}<p><small>{{ consultation.instrument_info }}</small></p>{% endif %}
   <p style="white-space: pre-wrap">{{ consultation.symptom }}</p>
   {% if consultation.image_filename %}
     <img src="{{ url_for('consultations.photo', consultation_id=consultation.id) }}" alt="問診に付けた写真" style="max-width: 20rem">
