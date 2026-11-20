@@ -41,6 +41,16 @@
     {% block content %}{% endblock %}
   </main>
   <footer class="site-footer site-footer--photo"><span class="title-mark">ギター修理の AI 見積</span></footer>
+  {# 工房の連絡先。工房の名前・電話・メール・受付時間は架空。住所は講義の会場（八幡平市起業家支援センター）を借りている #}
+  <section class="site-info" aria-label="工房の連絡先">
+    <address>
+      <strong>大更ギター工房</strong><br>
+      〒028-7111 岩手県八幡平市大更25地割113番地（八幡平市起業家支援センター内）<br>
+      電話 0195-00-0000　メール info@example.com<br>
+      受付 10:00〜18:00（水曜定休）
+    </address>
+    <p><small>このサイトは、八幡平市スパルタキャンプ Python 編の制作物です。<br>工房の名前、電話番号、メールアドレス、受付時間は架空です。住所は、講義の会場を借りて書いています。</small></p>
+  </section>
   <script>
     // AI を呼ぶフォームの送信のボタン（data-once）を、2回押せないようにする
     document.addEventListener("submit", (event) => {

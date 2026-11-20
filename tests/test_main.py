@@ -54,3 +54,16 @@ def test_theme_css_url_has_a_version(client):
 
     assert "css/theme.css?v=" in text
     assert "css/theme.css?v=0" not in text
+
+
+# --- 工房の連絡先
+
+
+@pytest.mark.parametrize("path", ["/", "/login"])
+def test_どの画面にも工房の連絡先と架空の注記がある(client, path):
+    text = client.get(path).text
+
+    assert "大更ギター工房" in text
+    assert "〒028-7111 岩手県八幡平市大更25地割113番地" in text
+    assert "info@example.com" in text
+    assert "架空です" in text
