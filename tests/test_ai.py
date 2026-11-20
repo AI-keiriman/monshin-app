@@ -54,7 +54,15 @@ def use_client(app, monkeypatch):
 
 
 def questions_message(questions):
-    return message([text_block(json.dumps({"questions": questions}))])
+    """質問の返事を作る。文字の質問は、選択肢なしの質問にする"""
+    items = [
+        q if isinstance(q, dict) else {"question": q, "choices": []} for q in questions
+    ]
+    return message([text_block(json.dumps({"questions": items}))])
+
+
+def texts(questions):
+    return [q.text for q in questions]
 
 
 def test_質問を3つ返す(use_client):
@@ -62,7 +70,7 @@ def test_質問を3つ返す(use_client):
 
     result = ai.generate_questions("ベース", "トーンノブが効かない")
 
-    assert result == QUESTIONS
+    assert texts(result) == QUESTIONS
     call = client.calls[0]
     assert call["model"] == "claude-haiku-5-5"
     assert call["max_tokens"] == 1024
@@ -101,17 +109,16 @@ def test_写真があれば画像のブロックを先に渡す(use_client):
 
 
 def test_thinkingのブロックが先頭にあっても文を読める(use_client):
-    use_client(
-        message([thinking_block(), text_block(json.dumps({"questions": QUESTIONS}))])
-    )
+    block = questions_message(QUESTIONS).content[0]
+    use_client(message([thinking_block(), block]))
 
-    assert ai.generate_questions("ベース", "音が出ない") == QUESTIONS
+    assert texts(ai.generate_questions("ベース", "音が出ない")) == QUESTIONS
 
 
 def test_質問が多いときは先頭の3つだけ使う(use_client):
     use_client(questions_message(QUESTIONS + ["質問4ですか？"]))
 
-    assert ai.generate_questions("ベース", "音が出ない") == QUESTIONS
+    assert texts(ai.generate_questions("ベース", "音が出ない")) == QUESTIONS
 
 
 @pytest.mark.parametrize(
@@ -188,4 +195,61 @@ def test_原因の予想は画面に出す質問に混ざらない(use_client):
     block.text = json.dumps(data, ensure_ascii=False)
     use_client(message)
 
-    assert ai.generate_questions("エレキギター", "音が変わらない") == QUESTIONS
+    assert texts(ai.generate_questions("エレキギター", "音が変わらない")) == QUESTIONS
+
+
+# --- 答えの選択肢
+
+
+def test_質問と一緒に答えの選択肢を返す(use_client):
+    use_client(
+        questions_message(
+            [
+                {"question": "質問1ですか？", "choices": [" はい ", "いいえ"]},
+                {
+                    "question": "質問2ですか？",
+                    "choices": ["いつも", "ときどき", "弾くときだけ"],
+                },
+                {"question": "質問3は？", "choices": []},
+            ]
+        )
+    )
+
+    result = ai.generate_questions("ベース", "音が出ない")
+
+    assert [q.choices for q in result] == [
+        ["はい", "いいえ"],
+        ["いつも", "ときどき", "弾くときだけ"],
+        [],
+    ]
+
+
+@pytest.mark.parametrize(
+    "choices",
+    [
+        ["はい"],  # 1つだけでは選べない
+        ["A", "B", "C", "D", "E"],  # 多すぎる
+        ["はい", "あ" * 31],  # 長すぎる
+        ["はい", "い\nいえ"],  # 改行は、保存の区切りと重なる
+        "はい",  # リストでない
+    ],
+)
+def test_選択肢の形がおかしいときは選択肢だけ捨てて質問は使う(use_client, choices):
+    questions = [
+        {"question": "質問1ですか？", "choices": choices},
+        {"question": "質問2ですか？", "choices": ["はい", "いいえ"]},
+        {"question": "質問3ですか？", "choices": ["はい", "いいえ"]},
+    ]
+    use_client(questions_message(questions))
+
+    result = ai.generate_questions("ベース", "音が出ない")
+
+    assert texts(result) == QUESTIONS
+    assert result[0].choices == []
+    assert result[1].choices == ["はい", "いいえ"]
+
+
+def test_返事の形で選択肢を必ず書かせる():
+    item = ai.QUESTIONS_SCHEMA["properties"]["questions"]["items"]
+    assert item["required"] == ["question", "choices"]
+    assert "choices" in ai.QUESTIONS_SYSTEM

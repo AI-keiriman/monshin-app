@@ -57,7 +57,9 @@ def test_AIには症状と答えと料金表の分類が渡る(
     call = fake_ai.diagnose_calls[0]
     assert call["instrument_label"] == "ベース"
     assert call["symptom"] == "トーンノブが効かない"
-    assert call["answers"] == list(zip(fake_ai.questions, ANSWERS.values()))
+    assert call["answers"] == list(
+        zip([q.text for q in fake_ai.questions], ANSWERS.values())
+    )
     # 料金表の全部の分類が、入れた順に渡る
     assert [code for code, _, _ in call["categories"]] == [
         row[0] for row in PRICE_RULES
@@ -351,12 +353,22 @@ def test_出口のボタンは3つで名前を見れば動きが分かる(
 
     text = client.get(f"/consultations/{consultation.id}").text
 
-    # 並びは、修理依頼に進む → ホームに戻る → 買取査定をする
+    # 修理依頼（赤）と買取査定（青）を並べ、ホームに戻るは「問診の一覧へ」の右に置く
+    assert "このまま修理に進みますか？" in text
+    assert 'class="choice-repair"' in text
+    assert 'class="choice-sell"' in text
     positions = [
         text.index(label)
-        for label in ("修理依頼に進む", "ホームに戻る", "買取査定をする")
+        for label in (
+            "修理依頼に進む",
+            "買取査定をする",
+            "問診の一覧へ",
+            "ホームに戻る",
+        )
     ]
     assert positions == sorted(positions)
+    # ホームに戻るは、リンクの見た目のボタンで、出口のフォームから送る
+    assert 'form="choice-form" name="choice" value="keep" class="link-button"' in text
     assert "準備中" not in text
 
 

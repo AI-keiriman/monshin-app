@@ -194,7 +194,11 @@ def create():
         consultation.image_filename = save_image(*image)
     for position, question in enumerate(questions, start=1):
         consultation.questions.append(
-            ConsultationQuestion(position=position, question=question)
+            ConsultationQuestion(
+                position=position,
+                question=question.text,
+                choices="\n".join(question.choices) or None,
+            )
         )
     db.session.add(consultation)
     db.session.commit()

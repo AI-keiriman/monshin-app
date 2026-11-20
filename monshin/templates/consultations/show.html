@@ -30,15 +30,16 @@
   <small>分類：{{ consultation.price_rule.label }}</small>
 </article>
 
-<h2>この楽器をどうしますか？</h2>
+<h2>このまま修理に進みますか？</h2>
 {% if consultation.choice %}
   <p>今の選択：<strong>{{ consultation.choice_label }}</strong></p>
 {% endif %}
-<form method="post" action="{{ url_for('consultations.choose', consultation_id=consultation.id) }}">
+{# 修理依頼（赤）と買取査定（青）を並べる。ホームに戻るは、下の「問診の一覧へ」の右に置き、同じフォームで送る #}
+<form id="choice-form" method="post" action="{{ url_for('consultations.choose', consultation_id=consultation.id) }}">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <div class="grid">
-    {% for value, label in choices %}
-      <button type="submit" name="choice" value="{{ value }}" {% if consultation.choice != value %}class="outline"{% endif %}>{{ label }}</button>
+  <div class="grid choice-buttons">
+    {% for value, label in choices if value != 'keep' %}
+      <button type="submit" name="choice" value="{{ value }}" class="choice-{{ value }}"{% if consultation.choice == value %} aria-current="true"{% endif %}>{{ label }}</button>
     {% endfor %}
   </div>
 </form>
@@ -56,5 +57,10 @@
   </article>
 {% endif %}
 
-<p><a href="{{ url_for('consultations.index') }}">問診の一覧へ</a></p>
+<p class="result-links">
+  <a href="{{ url_for('consultations.index') }}">問診の一覧へ</a>
+  {% for value, label in choices if value == 'keep' %}
+    <button type="submit" form="choice-form" name="choice" value="{{ value }}" class="link-button">{{ label }}</button>
+  {% endfor %}
+</p>
 {% endblock %}

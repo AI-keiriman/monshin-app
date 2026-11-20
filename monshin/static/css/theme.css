@@ -330,3 +330,111 @@ main.container {
   align-items: flex-end;
   justify-content: center;
 }
+
+/* ---------- 結果の画面の出口 */
+/* 修理依頼は赤、買取査定は青。2つを横に並べる */
+button.choice-repair {
+  --pico-background-color: #a3201b;
+  --pico-border-color: #a3201b;
+  --pico-color: #ffffff;
+}
+button.choice-repair:is(:hover, :active, :focus) {
+  --pico-background-color: #7c1712;
+  --pico-border-color: #7c1712;
+  --pico-color: #ffffff;
+}
+button.choice-sell {
+  --pico-background-color: #1f4f8f;
+  --pico-border-color: #1f4f8f;
+  --pico-color: #ffffff;
+}
+button.choice-sell:is(:hover, :active, :focus) {
+  --pico-background-color: #163a6a;
+  --pico-border-color: #163a6a;
+  --pico-color: #ffffff;
+}
+/* 今の選択は、文字に下線を引いて示す */
+.choice-buttons button[aria-current="true"] {
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+/* 「問診の一覧へ」と「ホームに戻る」を、同じリンクの見た目で横に並べる */
+.result-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+button.link-button,
+button.link-button:is(:hover, :active, :focus) {
+  --pico-background-color: transparent;
+  --pico-border-color: transparent;
+  --pico-box-shadow: none;
+  width: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  color: var(--pico-primary);
+  text-decoration: underline;
+  text-decoration-color: var(--pico-primary-underline);
+  text-underline-offset: 0.125rem;
+}
+button.link-button:is(:hover, :focus) {
+  color: var(--pico-primary-hover);
+}
+
+/* ---------- 質問の画面（1問ずつ） */
+.question-step {
+  margin-bottom: 2rem;
+}
+.question-progress {
+  margin-bottom: 0.25rem;
+  font-size: 0.85rem;
+  color: var(--pico-muted-color);
+}
+.choice-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0;
+}
+.choice-chips button {
+  width: auto;
+  margin: 0;
+  padding: 0.5rem 1.25rem;
+}
+.step-nav {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.75rem;
+}
+.step-nav button {
+  width: auto;
+  margin: 0;
+}
+.step-message {
+  display: block;
+  color: #a3201b;
+}
+.question-summary dd {
+  margin: 0 0 1rem;
+  white-space: pre-wrap;
+}
+
+/* ---------- 音声入力 */
+.voice-button {
+  width: auto;
+  padding: 0.35rem 1rem;
+  font-size: 0.85rem;
+  margin-top: -0.5rem;
+}
+.voice-button[aria-pressed="true"] {
+  --pico-background-color: #a3201b;
+  --pico-border-color: #a3201b;
+  --pico-color: #ffffff;
+}
+.voice-status {
+  display: block;
+  margin-bottom: 0.75rem;
+}

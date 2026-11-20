@@ -80,9 +80,10 @@ def create_app(config=None):
     commands.init_app(app)
 
     # nginx は static のファイルを、ブラウザーに7日間おぼえさせる。
-    # CSS を変えたのに古い見た目のままにならないように、URL に版の番号（ファイルの更新時刻）を付ける
-    theme_css = Path(app.static_folder) / "css" / "theme.css"
-    asset_version = int(theme_css.stat().st_mtime) if theme_css.exists() else 0
+    # CSS や JavaScript を変えたのに古いままにならないように、URL に版の番号（一番新しい更新時刻）を付ける
+    static = Path(app.static_folder)
+    assets = [*static.glob("css/*.css"), *static.glob("js/*.js")]
+    asset_version = max((int(p.stat().st_mtime) for p in assets), default=0)
 
     @app.context_processor
     def inject_asset_version():
