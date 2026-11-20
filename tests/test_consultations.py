@@ -73,7 +73,9 @@ def test_問診を作ると質問が3つ保存される(client, user, login, fak
     assert consultation.status == "asking"
     assert consultation.image_filename is None
     assert [q.position for q in consultation.questions] == [1, 2, 3]
-    assert [q.question for q in consultation.questions] == fake_ai.questions
+    assert [q.question for q in consultation.questions] == [
+        q.text for q in fake_ai.questions
+    ]
     # AI には、楽器の名前（日本語）と症状が渡る
     assert len(fake_ai.question_calls) == 1
     call = fake_ai.question_calls[0]
@@ -297,7 +299,7 @@ def test_質問の画面に症状と質問が出る(client, user, login, fake_ai
     assert response.status_code == 200
     assert "トーンノブが効かない" in response.text
     for question in fake_ai.questions:
-        assert question in response.text
+        assert question.text in response.text
 
 
 def test_AIが作った文は自動エスケープされる(client, user, login, make_consultation):
@@ -592,3 +594,51 @@ def test_長すぎるメーカーと機種名では問診を作らない(client,
 
     assert count(Consultation) == 0
     assert fake_ai.question_calls == []
+
+
+# --- 答えの選択肢、1問ずつ、音声入力
+
+
+def test_AIが返した選択肢を質問と一緒に保存する(client, user, login, fake_ai):
+    login(user)
+
+    post_consultation(client)
+
+    questions = db.session.scalar(db.select(Consultation)).questions
+    assert [q.choices for q in questions] == [
+        "はい\nいいえ",
+        "いつも\nときどき\n出ない",
+        None,
+    ]
+    assert questions[1].choice_list == ["いつも", "ときどき", "出ない"]
+    assert questions[2].choice_list == []
+
+
+def test_質問の画面に選択肢と音声入力と1問ずつの仕組みがある(
+    client, user, login, fake_ai
+):
+    login(user)
+    post_consultation(client)
+    consultation = db.session.scalar(db.select(Consultation))
+
+    text = client.get(f"/consultations/{consultation.id}/questions").text
+
+    assert 'data-choice="ときどき"' in text
+    # 選択肢の無い質問には、選択肢の枠を出さない
+    assert text.count('class="choice-chips"') == 2
+    assert text.count("data-voice") == 3
+    assert "data-stepper" in text
+    assert "js/questions.js" in text
+    assert "js/voice.js" in text
+
+
+def test_症状の欄で音声入力を使える(client, user, login):
+    login(user)
+
+    text = client.get("/consultations/new").text
+
+    assert 'name="symptom"' in text
+    assert "data-voice" in text
+    assert "js/voice.js" in text
+    # 質問の画面だけの JavaScript は読まない
+    assert "js/questions.js" not in text

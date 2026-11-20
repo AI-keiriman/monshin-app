@@ -17,6 +17,9 @@ QUESTION_COUNT = 3
 CANDIDATE_COUNT = 3
 # 質問の文の長さの上限（DB のカラムの長さに合わせる）
 QUESTION_MAX_LENGTH = 255
+# 1つの質問に付ける選択肢の数と、1つの選択肢の長さの上限。超えたら、選択肢は出さない
+CHOICE_MAX_COUNT = 4
+CHOICE_MAX_LENGTH = 30
 # AI が挙げる原因の候補の数の上限
 CAUSE_MAX_COUNT = 3
 # 原因の名前と説明の長さの上限（名前は DB のカラムの長さに合わせる）
@@ -24,6 +27,14 @@ CAUSE_NAME_MAX_LENGTH = 100
 CAUSE_DESCRIPTION_MAX_LENGTH = 500
 # 料金表のどの分類にも当たらないときの code
 OTHER_CODE = "other"
+
+
+@dataclass
+class AIQuestion:
+    """AI が作った質問。choices は答えの選択肢（無ければ空のリスト）"""
+
+    text: str
+    choices: list[str]
 
 
 class AIError(Exception):
@@ -73,7 +84,9 @@ QUESTIONS_SYSTEM = f"""\
 
 質問の決まり：
 - 持ち主が、道具を使わずに、その場ですぐ答えられる質問にする
-- 「はい」「いいえ」か、質問の中に書いた2つか3つの選択肢で答えられる形にする
+- 「はい」「いいえ」か、2つか3つの選択肢で答えられる形にする
+- 答えの選択肢を choices に書く。「はい」「いいえ」で答える質問なら、choices は「はい」「いいえ」にする
+- 選択肢は、1つを15文字以内の短い言葉にする。質問の文には、選択肢を書かない
 - 1つの質問では、1つのことだけを聞く。「AやB」のように、2つのことをまとめない
 - 部品の専門用語（ポット、ジャック、ナット、ピックアップなど）を使わない
 - 「ノブ」「ケーブルを差す穴」のように、見た目でわかる言葉を使う
@@ -85,7 +98,7 @@ QUESTIONS_SYSTEM = f"""\
 
 質問の形（「〜」のところを、症状に合わせて書く）：
 - 〜を〜すると、〜は変わりますか？
-- 〜は、どのようなときに起きますか？（いつも／ときどき／〜のときだけ）
+- 〜は、どのようなときに起きますか？（choices：いつも／ときどき／〜のときだけ）
 - 〜の前に、〜はありましたか？
 
 「診断の手引き」が付くことがあります。工房がまとめた、症状ごとの確かめる点と見分け方です。
@@ -112,7 +125,18 @@ QUESTIONS_SCHEMA = {
                 "additionalProperties": False,
             },
         },
-        "questions": {"type": "array", "items": {"type": "string"}},
+        "questions": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "question": {"type": "string"},
+                    "choices": {"type": "array", "items": {"type": "string"}},
+                },
+                "required": ["question", "choices"],
+                "additionalProperties": False,
+            },
+        },
     },
     "required": ["candidates", "questions"],
     "additionalProperties": False,
@@ -270,7 +294,7 @@ def generate_questions(
     symptom: str,
     image: tuple[bytes, str] | None = None,
     guides: list[GuideEntry] | None = None,
-) -> list[str]:
+) -> list[AIQuestion]:
     """症状から、持ち主への質問を QUESTION_COUNT 個作る。
 
     image は (写真のバイト列, "image/jpeg" などの種類)。無ければ None。
@@ -299,13 +323,34 @@ def generate_questions(
     questions = data.get("questions")
     if not isinstance(questions, list):
         raise AIError("質問の一覧が無い")
-    questions = [q.strip() for q in questions if isinstance(q, str) and q.strip()]
+    questions = [q for q in map(_parse_question, questions) if q is not None]
     if len(questions) < QUESTION_COUNT:
         raise AIError("質問の数が足りない")
     questions = questions[:QUESTION_COUNT]
-    if any(len(q) > QUESTION_MAX_LENGTH for q in questions):
+    if any(len(q.text) > QUESTION_MAX_LENGTH for q in questions):
         raise AIError("質問が長すぎる")
     return questions
+
+
+def _parse_question(item) -> AIQuestion | None:
+    """返事の質問1つを AIQuestion にする。文が空なら None。選択肢の形がおかしければ、選択肢だけ捨てる"""
+    if not isinstance(item, dict) or not isinstance(item.get("question"), str):
+        return None
+    text = item["question"].strip()
+    if not text:
+        return None
+    raw = item.get("choices")
+    choices = []
+    if isinstance(raw, list):
+        choices = [c.strip() for c in raw if isinstance(c, str) and c.strip()]
+    # 選択肢は、質問を答えやすくするためのもの。形がおかしくても、質問は使う
+    if (
+        len(choices) < 2
+        or len(choices) > CHOICE_MAX_COUNT
+        or any(len(c) > CHOICE_MAX_LENGTH or "\n" in c for c in choices)
+    ):
+        choices = []
+    return AIQuestion(text, choices)
 
 
 def diagnose(

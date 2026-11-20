@@ -31,9 +31,9 @@
   <label>
     {{ form.symptom.label.text }}
     {% if form.symptom.errors %}
-      {{ form.symptom(rows=5, placeholder="例：トーンノブを回しても、音が変わらない", aria_invalid="true") }}
+      {{ form.symptom(rows=5, placeholder="例：トーンノブを回しても、音が変わらない", aria_invalid="true", data_voice="") }}
     {% else %}
-      {{ form.symptom(rows=5, placeholder="例：トーンノブを回しても、音が変わらない") }}
+      {{ form.symptom(rows=5, placeholder="例：トーンノブを回しても、音が変わらない", data_voice="") }}
     {% endif %}
     {% for e in form.symptom.errors %}<small>{{ e }}</small>{% endfor %}
   </label>

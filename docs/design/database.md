@@ -40,6 +40,7 @@ erDiagram
         int consultation_id FK
         int position "1〜3"
         string question
+        text choices "nullable"
         text answer "nullable"
     }
     consultation_causes {
@@ -101,6 +102,7 @@ erDiagram
 | consultation_id | Integer | not null, FK consultations.id | |
 | position | Integer | not null | 1〜3。画面に出す順番 |
 | question | String(255) | not null | AI が作った質問 |
+| choices | Text | nullable | AI が作った答えの選択肢。1行に1つ（2〜4個、1つ30文字まで）。無い質問は NULL |
 | answer | Text | nullable | 本人の答え。500文字まで（フォームで確かめる） |
 
 `(consultation_id, position)` に unique 制約を付ける。

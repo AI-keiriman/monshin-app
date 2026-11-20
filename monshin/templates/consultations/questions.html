@@ -13,16 +13,29 @@
 
 <p>故障の原因を絞り込むために、次の質問に答えてください。</p>
 
-<form method="post" action="{{ url_for('consultations.answers', consultation_id=consultation.id) }}" novalidate>
+{# JavaScript が動くときは、questions.js が1問ずつ出す。動かないときは、3問が並んで出る #}
+<form method="post" action="{{ url_for('consultations.answers', consultation_id=consultation.id) }}" novalidate data-stepper>
   {{ form.hidden_tag() }}
   {% for question in consultation.questions %}
     {% set f = form.answer_fields[loop.index0] %}
-    <label>
-      質問{{ question.position }}：{{ question.question }}
-      {% if f.errors %}{{ f(rows=2, aria_invalid="true") }}{% else %}{{ f(rows=2) }}{% endif %}
+    <section class="question-step" data-step>
+      <p class="question-progress" hidden>質問 {{ question.position }} / {{ consultation.questions|length }}</p>
+      <label for="{{ f.id }}"><strong>質問{{ question.position }}：{{ question.question }}</strong></label>
+      {% if question.choice_list %}
+        {# 選択肢を押すと、答えの欄に入る。押した後に、書き足すこともできる #}
+        <div class="choice-chips" hidden>
+          {% for choice in question.choice_list %}
+            <button type="button" class="outline" data-choice="{{ choice }}">{{ choice }}</button>
+          {% endfor %}
+        </div>
+      {% endif %}
+      {% if f.errors %}{{ f(rows=2, aria_invalid="true", data_voice="") }}{% else %}{{ f(rows=2, data_voice="") }}{% endif %}
       {% for e in f.errors %}<small>{{ e }}</small>{% endfor %}
-    </label>
+    </section>
   {% endfor %}
   <button type="submit" data-once>結果を見る</button>
 </form>
+{% endblock %}
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/questions.js', v=asset_version) }}"></script>
 {% endblock %}

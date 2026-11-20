@@ -5,7 +5,7 @@ from monshin.commands import seed_diagnosis_guides, seed_price_rules
 from monshin.extensions import db
 from monshin.models import Consultation, ConsultationQuestion, User
 from monshin.services import ai
-from monshin.services.ai import Cause, Diagnosis
+from monshin.services.ai import AIQuestion, Cause, Diagnosis
 
 # 本物の外部サービス（Claude API）は、テストでは呼ばない。
 # フェイク（偽物）のクラスを create_app() の設定で差し替える。
@@ -15,6 +15,8 @@ FAKE_QUESTIONS = [
     "ノブを回すときに、雑音は出ますか？",
     "ほかのノブやスイッチは、ふつうに動きますか？",
 ]
+# フェイクの AI が、質問と一緒に返す選択肢。3つ目は選択肢なし（自由に書いて答える）
+FAKE_CHOICES = [["はい", "いいえ"], ["いつも", "ときどき", "出ない"], []]
 
 
 class FakeAI:
@@ -22,7 +24,10 @@ class FakeAI:
 
     def __init__(self):
         self.question_calls = []  # generate_questions が呼ばれたときの引数
-        self.questions = list(FAKE_QUESTIONS)
+        self.questions = [
+            AIQuestion(text, list(choices))
+            for text, choices in zip(FAKE_QUESTIONS, FAKE_CHOICES)
+        ]
         self.diagnose_calls = []  # diagnose が呼ばれたときの引数
         self.diagnosis = Diagnosis(
             causes=[

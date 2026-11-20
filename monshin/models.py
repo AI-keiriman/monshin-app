@@ -56,11 +56,12 @@ CHOICE_LABELS = {
     Choice.KEEP: "そのまま使う",
 }
 
-# 結果の画面のボタン。並べる順に書く。名前を見れば、押した後に何が起きるかが分かるようにする
+# 結果の画面のボタンの名前。名前を見れば、押した後に何が起きるかが分かるようにする。
+# 修理依頼（赤）と買取査定（青）を並べ、ホームに戻るは「問診の一覧へ」の右に置く
 CHOICE_BUTTONS = [
     (Choice.REPAIR, "修理依頼に進む"),
-    (Choice.KEEP, "ホームに戻る"),
     (Choice.SELL, "買取査定をする"),
+    (Choice.KEEP, "ホームに戻る"),
 ]
 
 
@@ -236,9 +237,16 @@ class ConsultationQuestion(db.Model):
     )
     position: Mapped[int]  # 1〜3。画面に出す順番
     question: Mapped[str] = mapped_column(String(255))
+    # 答えの選択肢。1行に1つ。無ければ None（自由に書いて答える）
+    choices: Mapped[str | None] = mapped_column(Text)
     answer: Mapped[str | None] = mapped_column(Text)
 
     consultation: Mapped[Consultation] = relationship(back_populates="questions")
+
+    @property
+    def choice_list(self) -> list[str]:
+        """選択肢のリスト。無ければ空"""
+        return self.choices.split("\n") if self.choices else []
 
 
 class ConsultationCause(db.Model):
