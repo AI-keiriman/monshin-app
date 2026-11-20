@@ -438,3 +438,28 @@ button.link-button:is(:hover, :focus) {
   display: block;
   margin-bottom: 0.75rem;
 }
+
+/* ---------- 工房の連絡先（全ページ、写真の帯の下） */
+.site-info {
+  background: var(--monshin-ink);
+  color: #c9c4bb;
+  text-align: center;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  padding: 1.75rem 1rem 2rem;
+}
+.site-info address {
+  /* Pico は address の文字を黒にするので、帯の色に戻す */
+  color: inherit;
+  font-style: normal;
+  line-height: 1.9;
+  margin-bottom: 1rem;
+}
+.site-info strong {
+  color: #ffffff;
+  font-size: 1rem;
+}
+.site-info p {
+  margin: 0;
+  color: #8f897f;
+}
