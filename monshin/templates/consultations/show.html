@@ -9,7 +9,7 @@
   {% if consultation.image_filename %}
     <img src="{{ url_for('consultations.photo', consultation_id=consultation.id) }}" alt="問診に付けた写真" style="max-width: 20rem">
   {% endif %}
-  <details>
+  <details class="qa-details">
     <summary>質問と答え</summary>
     {% for question in consultation.questions %}
       <p><strong>質問{{ question.position }}：{{ question.question }}</strong><br><span style="white-space: pre-wrap">{{ question.answer }}</span></p>
@@ -28,6 +28,7 @@
 <article>
   <p style="font-size: 2rem; margin-bottom: 0"><strong>{{ consultation.price_rule.price_text }}</strong></p>
   <small>分類：{{ consultation.price_rule.label }}</small>
+  <p class="price-note"><small>※この金額は、AI の診断をもとにした目安です。実際の料金は、工房で楽器を確かめてから決まります。部品や作業の内容によって変わることがあります。</small></p>
 </article>
 
 <h2>このまま修理に進みますか？</h2>

@@ -510,3 +510,32 @@ def test_選択肢に無い出口には日本語の画面を返す(client, user,
 
     assert response.status_code == 422
     assert "送られた内容を受け付けられません" in response.text
+
+
+# --- 結果の画面の見た目
+
+
+def test_料金の見積に注意書きがある(client, user, make_done_consultation):
+    consultation = make_done_consultation(user)
+
+    text = client.get(f"/consultations/{consultation.id}").text
+
+    assert 'class="price-note"' in text
+    assert (
+        "この金額は、AI の診断をもとにした目安です。実際の料金は、工房で楽器を確かめてから決まります。部品や作業の内容によって変わることがあります。"
+        in text
+    )
+    # 注意書きは、料金の見積の後、修理に進むかの見出しの前に出す
+    assert (
+        text.index("料金の見積")
+        < text.index("price-note")
+        < text.index("このまま修理に進みますか？")
+    )
+
+
+def test_質問と答えは右に寄せる印が付く(client, user, make_done_consultation):
+    consultation = make_done_consultation(user)
+
+    text = client.get(f"/consultations/{consultation.id}").text
+
+    assert '<details class="qa-details">' in text
