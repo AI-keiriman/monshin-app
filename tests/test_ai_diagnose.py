@@ -129,3 +129,42 @@ def test_返事の形が違うときはAIErrorにする(use_client, data):
 
     with pytest.raises(ai.AIError):
         diagnose()
+
+
+# --- 同じ文の繰り返し
+
+
+def test_説明で繰り返した文は1回だけ残す(use_client):
+    again = "ポットの交換が必要になる可能性があります。"
+    description = (
+        "ノブの奥の部品がすり減っています。" + again + "雑音とも合います。" + again * 5
+    )
+    use_client(
+        {
+            "causes": [{"name": "ポットの摩耗", "description": description}],
+            "category_code": "pot",
+        }
+    )
+
+    result = diagnose()
+
+    assert result.causes[0].description == (
+        "ノブの奥の部品がすり減っています。" + again + "雑音とも合います。"
+    )
+
+
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("一つ目。二つ目。", "一つ目。二つ目。"),
+        ("同じ。同じ。同じ。", "同じ。"),
+        ("同じ。 同じ。違う", "同じ。違う"),
+        ("  前後に空白。  ", "前後に空白。"),
+    ],
+)
+def test_繰り返しを取り除く関数(text, expected):
+    assert ai.drop_repeated_sentences(text) == expected
+
+
+def test_繰り返さないよう指示する():
+    assert "同じ文を繰り返さない" in ai.DIAGNOSIS_SYSTEM

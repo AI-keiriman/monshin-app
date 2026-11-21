@@ -4,6 +4,7 @@ import base64
 import json
 import logging
 import os
+import re
 from dataclasses import dataclass
 
 import anthropic
@@ -27,6 +28,8 @@ CAUSE_NAME_MAX_LENGTH = 100
 CAUSE_DESCRIPTION_MAX_LENGTH = 500
 # 料金表のどの分類にも当たらないときの code
 OTHER_CODE = "other"
+# 文の区切り。「。」までを1つの文とし、最後の「。」の無い部分も1つの文とする
+SENTENCE = re.compile(r"[^。]*。|[^。]+$")
 
 
 @dataclass
@@ -151,6 +154,7 @@ DIAGNOSIS_SYSTEM = f"""\
    - name：原因の名前。30文字以内
    - description：なぜそう考えられるかの説明。持ち主にわかる言葉で、150文字以内
    - description の最後に、直すときに見込まれる作業を一言添える（例：「部品の交換が必要になる可能性があります」）。作業の手順は書かない
+   - 同じ文を繰り返さない。作業の一言は、最後に1回だけ書く
    - 部品の名前を使うときは、「ポット（ノブの奥にある部品）」のように、短い説明を添える
 2. category_code：料金表の分類の code を1つ
    - 一番可能性が高い原因に合う分類を選ぶ
@@ -353,6 +357,18 @@ def _parse_question(item) -> AIQuestion | None:
     return AIQuestion(text, choices)
 
 
+def drop_repeated_sentences(text: str) -> str:
+    """同じ文が2回以上出たら、最初の1回だけを残す。AI がまれに同じ文を繰り返すため"""
+    seen = set()
+    kept = []
+    for sentence in SENTENCE.findall(text.strip()):
+        key = sentence.strip()
+        if key and key not in seen:
+            seen.add(key)
+            kept.append(key)
+    return "".join(kept)
+
+
 def diagnose(
     instrument_label: str,
     symptom: str,
@@ -411,7 +427,7 @@ def diagnose(
         description = raw.get("description")
         if not isinstance(name, str) or not isinstance(description, str):
             continue
-        name, description = name.strip(), description.strip()
+        name, description = name.strip(), drop_repeated_sentences(description)
         if name and description:
             causes.append(Cause(name=name, description=description))
     if not causes:
