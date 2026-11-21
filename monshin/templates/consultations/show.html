@@ -28,7 +28,8 @@
 <article>
   <p style="font-size: 2rem; margin-bottom: 0"><strong>{{ consultation.price_rule.price_text }}</strong></p>
   <small>分類：{{ consultation.price_rule.label }}</small>
-  <p class="price-note"><small>※この金額は、AI の診断をもとにした目安です。実際の料金は、工房で楽器を確かめてから決まります。部品や作業の内容によって変わることがあります。</small></p>
+  {# 注意書き。金額が無い分類（要相談）では、金額の話をしない文に切り替える #}
+  <p class="price-note"><small>{% if consultation.price_rule.min_price is none %}※この症状は、AI では金額の目安を出せませんでした。工房で楽器を確かめてから、料金をお知らせします。{% else %}※この金額は、AI の診断をもとにした目安です。実際の料金は、工房で楽器を確かめてから決まります。部品や作業の内容によって変わることがあります。{% endif %}</small></p>
 </article>
 
 <h2>このまま修理に進みますか？</h2>

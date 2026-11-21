@@ -189,7 +189,7 @@ def test_結果の画面に原因と料金の見積が出る(client, user, make_
     [
         ("fret", "16,000円〜90,000円"),  # 下限と上限がある
         ("pot", "3,000円〜"),  # 下限だけがある
-        ("other", "要見積"),  # どちらも無い
+        ("other", "要相談"),  # どちらも無い
     ],
 )
 def test_料金の表示は3通り(
@@ -539,3 +539,19 @@ def test_質問と答えは右に寄せる印が付く(client, user, make_done_c
     text = client.get(f"/consultations/{consultation.id}").text
 
     assert '<details class="qa-details">' in text
+
+
+def test_金額が無い分類では注意書きを切り替える(
+    client, user, fake_ai, make_done_consultation
+):
+    fake_ai.diagnosis.category_code = "other"
+    consultation = make_done_consultation(user)
+
+    text = client.get(f"/consultations/{consultation.id}").text
+
+    assert "要相談" in text
+    assert (
+        "※この症状は、AI では金額の目安を出せませんでした。工房で楽器を確かめてから、料金をお知らせします。"
+        in text
+    )
+    assert "この金額は、AI の診断をもとにした目安です" not in text
