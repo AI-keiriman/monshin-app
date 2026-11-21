@@ -32,7 +32,8 @@ def create_app(config=None):
         # テストではフェイクを渡す。None なら本物の services/ai.py を使う
         AI_SERVICE=None,
         # 返事の長さの上限。考える分（thinking）もここに数えられるので、余裕を持たせる
-        AI_MAX_TOKENS_QUESTIONS=1024,
+        # 質問は選択肢（choices）も返すので、1024 では本番で切れた（2026-11-21）
+        AI_MAX_TOKENS_QUESTIONS=2048,
         AI_MAX_TOKENS_DIAGNOSIS=2048,
         # 1回の呼び出しで待つ秒数と、やり直しの回数。
         # 質問の作成は、原因の予想も書くので10秒ほどかかることがある。

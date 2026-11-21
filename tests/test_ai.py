@@ -73,7 +73,7 @@ def test_質問を3つ返す(use_client):
     assert texts(result) == QUESTIONS
     call = client.calls[0]
     assert call["model"] == "claude-haiku-5-5"
-    assert call["max_tokens"] == 1024
+    assert call["max_tokens"] == 2048
     assert call["output_config"]["effort"] == "low"
     assert call["output_config"]["format"]["type"] == "json_schema"
     # 症状は、system ではなく user の文として渡す
